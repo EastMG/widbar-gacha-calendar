@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    零 NuGet 依赖的 console 测试运行器：dotnet run（Release）即可，
+    退出码 0 = 全部通过，非 0 = 有失败。刻意不用 xunit/NUnit，避免还原依赖。
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>GachaCalendar.Core.Tests</RootNamespace>
+    <AssemblyName>GachaCalendar.Core.Tests</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <IsPackable>false</IsPackable>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\GachaCalendar.Core\GachaCalendar.Core.csproj" />
+  </ItemGroup>
+
+</Project>

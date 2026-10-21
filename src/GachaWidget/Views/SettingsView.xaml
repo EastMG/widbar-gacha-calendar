@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="GachaWidget.Views.SettingsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:GachaWidget.Views"
+    xmlns:conv="using:GachaWidget.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+    </UserControl.Resources>
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Padding="4,2,16,16" Spacing="18" MaxWidth="720" HorizontalAlignment="Stretch">
+
+            <!-- 显示 -->
+            <StackPanel Spacing="8">
+                <TextBlock
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                    Text="显示" />
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="任务栏预览条显示几条" />
+                        <TextBlock
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Text="1–3 条，按最近结束排序；更多内容点开面板看。" />
+                    </StackPanel>
+                    <NumberBox
+                        x:Name="PreviewItemsBox"
+                        Grid.Column="1"
+                        Width="120"
+                        Maximum="3"
+                        Minimum="1"
+                        SpinButtonPlacementMode="Compact"
+                        ValueChanged="OnPreviewItemsChanged" />
+                </Grid>
+                <ToggleSwitch
+                    x:Name="ShowGachaSwitch"
+                    Header="面板显示「卡池」列"
+                    Toggled="OnSimpleToggled" />
+                <ToggleSwitch
+                    x:Name="ShowEventSwitch"
+                    Header="面板显示「活动」列"
+                    Toggled="OnSimpleToggled" />
+            </StackPanel>
+
+            <!-- 刷新 -->
+            <StackPanel Spacing="8">
+                <TextBlock
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                    Text="刷新" />
+                <ToggleSwitch
+                    x:Name="AutoRefreshSwitch"
+                    Header="自动刷新"
+                    Toggled="OnSimpleToggled" />
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="刷新间隔" />
+                        <TextBlock
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Text="数据源每 6 小时更新一轮；间隔比 6 小时短不会更新数据，只会多一次请求。" />
+                    </StackPanel>
+                    <ComboBox
+                        x:Name="RefreshIntervalBox"
+                        Grid.Column="1"
+                        MinWidth="140"
+                        SelectionChanged="OnRefreshIntervalChanged" />
+                </Grid>
+                <TextBlock
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Text="倒计时每分钟在本地重算，所以数据抓取时间不影响剩余时间的精度。" />
+            </StackPanel>
+
+            <!-- 数据源 -->
+            <StackPanel Spacing="8">
+                <TextBlock
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                    Text="数据源" />
+                <TextBox
+                    x:Name="FeedUrlBox"
+                    Header="快照地址（JSON）"
+                    PlaceholderText="https://…/latest.json"
+                    TextChanged="OnFeedUrlChanged" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button
+                        x:Name="CheckFeedButton"
+                        Click="OnCheckFeedClick"
+                        Content="检查数据" />
+                    <Button Click="OnResetFeedClick" Content="恢复默认地址" />
+                </StackPanel>
+                <TextBlock
+                    x:Name="CheckResultText"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    IsTextSelectionEnabled="True"
+                    Text=""
+                    TextWrapping="Wrap"
+                    Visibility="Collapsed" />
+            </StackPanel>
+
+            <!-- 条目 -->
+            <StackPanel Spacing="8">
+                <Grid ColumnSpacing="12">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="2">
+                        <TextBlock
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                            Text="条目" />
+                        <TextBlock
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Text="勾选 = 在面板与预览条里显示；上下箭头调整顺序。" />
+                    </StackPanel>
+                    <Button
+                        Grid.Column="1"
+                        VerticalAlignment="Top"
+                        Click="OnResetEntriesClick"
+                        Content="恢复默认" />
+                </Grid>
+                <ListView
+                    x:Name="EntriesList"
+                    MaxHeight="360"
+                    SelectionMode="None">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="local:SettingsEntryVm">
+                            <Grid Padding="0,2" ColumnSpacing="8">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <CheckBox
+                                    MinWidth="0"
+                                    VerticalAlignment="Center"
+                                    Click="OnEntryCheckBoxClick"
+                                    IsChecked="{x:Bind IsVisible, Mode=OneWay}" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    MaxLines="1"
+                                    Text="{x:Bind Name}"
+                                    TextTrimming="CharacterEllipsis" />
+                                <Button
+                                    Grid.Column="2"
+                                    Width="32"
+                                    Height="28"
+                                    Padding="0"
+                                    Click="OnMoveUpClick"
+                                    ToolTipService.ToolTip="上移">
+                                    <FontIcon FontSize="12" Glyph="&#xE74A;" />
+                                </Button>
+                                <Button
+                                    Grid.Column="3"
+                                    Width="32"
+                                    Height="28"
+                                    Padding="0"
+                                    Click="OnMoveDownClick"
+                                    ToolTipService.ToolTip="下移">
+                                    <FontIcon FontSize="12" Glyph="&#xE74B;" />
+                                </Button>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </StackPanel>
+
+            <!-- 关于 -->
+            <StackPanel Spacing="6">
+                <TextBlock
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                    Text="关于" />
+                <TextBlock
+                    x:Name="AboutText"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Text="非官方信息聚合，与各游戏厂商无关；不收集任何数据。数据来自公开的官方公告与社区 Wiki。"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

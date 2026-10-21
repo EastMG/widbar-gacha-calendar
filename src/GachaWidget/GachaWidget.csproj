@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    WidBar 任务栏小组件（WinUI 3，单项目 MSIX）。
+    - 目标框架与 WidBar 官方模板一致：net10.0-windows10.0.19041.0
+    - Windows App SDK 框架依赖（WidBar 已经带这个运行时，包内不再塞第二份）
+    - TFM/GUID/插件属性改动会影响 WidBar 的发现，先看 docs/03-WidBar插件契约.md
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>GachaWidget</RootNamespace>
+    <AssemblyName>GachaWidget</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Platforms>x64;ARM64</Platforms>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <UseWinUI>true</UseWinUI>
+    <WinUISDKReferences>false</WinUISDKReferences>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <WindowsPackageType>MSIX</WindowsPackageType>
+    <SelfContained>false</SelfContained>
+    <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
+    <AppxPackageSigningEnabled>false</AppxPackageSigningEnabled>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
+    <Version>0.1.0</Version>
+    <Authors>EastMG</Authors>
+    <Company>EastMG</Company>
+    <Product>二游日历 for WidBar</Product>
+    <Description>28 款二游的卡池与活动倒计时，常驻 Windows 11 任务栏。</Description>
+    <Copyright>MIT © 2026 EastMG</Copyright>
+    <NeutralLanguage>zh-Hans</NeutralLanguage>
+    <SatelliteResourceLanguages>zh-Hans;en</SatelliteResourceLanguages>
+
+    <!-- WidBar SDK 的 build target 会用这些属性生成 obj\widbar\plugin.json（不要手写） -->
+    <WidBarPluginId>com.eastmg.gachacalendar</WidBarPluginId>
+    <WidBarPluginName>二游日历</WidBarPluginName>
+    <WidBarPluginDescription>28 款二游的卡池与活动倒计时，常驻 Windows 11 任务栏。</WidBarPluginDescription>
+    <WidBarPluginCategory>Information</WidBarPluginCategory>
+    <WidBarPluginVersion>0.1.0</WidBarPluginVersion>
+    <WidBarPluginPreviewWidth>252</WidBarPluginPreviewWidth>
+    <WidBarPluginConfigurable>true</WidBarPluginConfigurable>
+    <WidBarPluginMinHostVersion>1.0.0</WidBarPluginMinHostVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.3.1" />
+    <PackageReference Include="WidBar.SDK" Version="2.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GachaCalendar.Core\GachaCalendar.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AppxManifest Include="Package.appxmanifest">
+      <SubType>Designer</SubType>
+    </AppxManifest>
+    <Manifest Include="$(ApplicationManifest)" />
+    <Content Include="Assets\**\*.png" CopyToOutputDirectory="PreserveNewest" />
+    <!-- plugin.json 由 WidBar.SDK.targets 生成到 obj\widbar，打包时变成 Public\plugin.json -->
+    <Content Include="obj\widbar\plugin.json" Link="Public\plugin.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

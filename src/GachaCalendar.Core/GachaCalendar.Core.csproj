@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    壳无关数据层：net8.0，不引任何 WinUI/WPF/NuGet 包，
+    这样 net8.0-windows10.0.19041 的 WinUI 3 widget 工程可以直接 ProjectReference。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>GachaCalendar.Core</RootNamespace>
+    <AssemblyName>GachaCalendar.Core</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Version>0.1.0</Version>
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <!--
+    catalog 与示例 feed 编译进程序集：首次启动 / 断网时不需要任何外部文件。
+    LogicalName 固定为裸文件名，EmbeddedData 按这个名字读取。
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\data\catalog.json" LogicalName="catalog.json" />
+    <EmbeddedResource Include="..\..\data\sample-feed.json" LogicalName="sample-feed.json" />
+  </ItemGroup>
+
+</Project>

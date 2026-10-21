@@ -1,0 +1,29 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# MSIX / 打包产物
+AppPackages/
+BundleArtifacts/
+*.msix
+*.msixupload
+*.msixbundle
+*.appx
+
+# 本地运行期数据（不进库）
+runtime-data/
+*.log
+
+# 构建/工具用的工作区临时目录（本机 Low IL 下 TEMP 必须指到这里）
+.tmp/
+
+# Node 工具
+node_modules/
+tools/node_modules/
+
+# 系统
+Thumbs.db
+.DS_Store

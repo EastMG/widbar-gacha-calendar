@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="GachaWidget.Controls.GameIcon"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <!-- 图标 + 首字兜底：外链失败时不留空洞 -->
+    <Grid Width="32" Height="32">
+        <Border
+            x:Name="FallbackHost"
+            Background="{ThemeResource ControlFillColorSecondaryBrush}"
+            CornerRadius="8">
+            <TextBlock
+                x:Name="FallbackGlyph"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                FontSize="14"
+                FontWeight="SemiBold"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="?" />
+        </Border>
+        <Image
+            x:Name="IconImage"
+            Width="32"
+            Height="32"
+            ImageFailed="OnImageFailed"
+            ImageOpened="OnImageOpened"
+            Visibility="Collapsed" />
+        <Border
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            IsHitTestVisible="False" />
+    </Grid>
+</UserControl>

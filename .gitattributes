@@ -1,0 +1,11 @@
+# 统一换行：仓库内文本用 LF（Windows 下的 C#/XAML 工具链都能读）
+* text=auto eol=lf
+
+# 二进制
+*.png binary
+*.ico binary
+*.msix binary
+*.msixupload binary
+
+# PowerShell 脚本保持 CRLF，避免旧版 Windows PowerShell 解析中文时踩行尾问题
+*.ps1 text eol=crlf

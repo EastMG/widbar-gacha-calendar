@@ -1,0 +1,231 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": 1792581052439,
+  "coreVersion": "0.12.5",
+  "games": [
+    {
+      "id": "genshin",
+      "name": "原神",
+      "icon": "https://storage.moegirl.org.cn/moegirl/commons/b/b0/%E5%8E%9F%E7%A5%9E%E5%9B%BE%E6%A0%87.png!/fw/512",
+      "order": 0,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "hsr",
+      "name": "崩坏：星穹铁道",
+      "icon": "https://storage.moegirl.org.cn/moegirl/commons/3/38/HonkaiStarRailIcon_StartingVer3.6_CHN.png!/fw/512",
+      "order": 1,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "zzz",
+      "name": "绝区零",
+      "icon": "https://storage.moegirl.org.cn/moegirl/commons/3/3e/ZZZ_miYoYo_logo.jpg!/fw/512",
+      "order": 2,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "bh3",
+      "name": "崩坏3",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/b0/03/81/b003811c-f82a-428c-aa49-195f22c311bd/AppIcon-1x_U007emarketing-0-10-0-85-220-0.png/512x512bb.jpg",
+      "order": 3,
+      "defaultHidden": true,
+      "tz": 480
+    },
+    {
+      "id": "wuwa",
+      "name": "鸣潮",
+      "icon": "https://storage.moegirl.org.cn/moegirl/commons/2/29/WutheringWavesIcon.png!/fw/512",
+      "order": 4,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "arknights",
+      "name": "明日方舟",
+      "icon": "https://storage.moegirl.org.cn/moegirl/commons/4/41/ArknightsAppIcon.png!/fw/512",
+      "order": 5,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "endfield",
+      "name": "明日方舟：终末地",
+      "icon": "https://storage.moegirl.org.cn/moegirl/commons/f/f1/ArknightsEndfieldAppIcon.png!/fw/512",
+      "order": 6,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "ba-cn",
+      "name": "蔚蓝档案·国服",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/7c/4f/1a/7c4f1a51-59e5-977c-42e2-6c980485044a/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+      "order": 7,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "ba-global",
+      "name": "蔚蓝档案·国际服",
+      "icon": "https://storage.moegirl.org.cn/moegirl/commons/2/25/AppIcon_Arona.png!/fw/512",
+      "order": 8,
+      "defaultHidden": false,
+      "tz": 0
+    },
+    {
+      "id": "ba-jp",
+      "name": "蔚蓝档案·日服",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/b2/83/84/b28384e9-b106-b48e-fc66-04679cd44d76/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+      "order": 9,
+      "defaultHidden": false,
+      "tz": 540
+    },
+    {
+      "id": "bandori",
+      "name": "BanG Dream！少女乐团派对·国服",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/cb/ae/11/cbae1132-58ee-8b5c-3016-dfd2f5e91e51/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+      "order": 10,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "ournotes",
+      "name": "BanG Dream！OurNotes·日服",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/bf/53/0f/bf530fd7-65e8-e875-0a46-720344af6134/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+      "order": 11,
+      "defaultHidden": true,
+      "tz": 540
+    },
+    {
+      "id": "ournotes-global",
+      "name": "BanG Dream！OurNotes·国际服",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/ca/da/3a/cada3a9a-491a-fbe5-5494-9be7390e3a9b/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+      "order": 12,
+      "defaultHidden": true,
+      "tz": 480
+    },
+    {
+      "id": "wuhuamixin",
+      "name": "物华弥新",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/13/7f/87/137f873a-f458-678d-347e-068830a74a69/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+      "order": 13,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "zspms",
+      "name": "战双帕弥什",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/b2/99/ed/b299ed39-90ea-03df-c7ee-bd09548991e5/AppIcon-1x_U007emarketing-0-8-0-85-220-0.png/512x512bb.jpg",
+      "order": 14,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "czn",
+      "name": "卡厄斯梦境",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/e2/c9/48/e2c94812-11cd-2a52-445a-d67d6ae9e169/AppIcon-0-0-1x_U007emarketing-0-11-0-85-220.png/512x512bb.jpg",
+      "order": 15,
+      "defaultHidden": true,
+      "tz": 480
+    },
+    {
+      "id": "kedr",
+      "name": "雪松",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/b5/8c/b6/b58cb6b2-4be3-0be0-852a-af761afaab06/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+      "order": 16,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "ddlezj",
+      "name": "嘟嘟脸恶作剧",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/64/f0/21/64f02145-182e-857a-133c-8de0151425d9/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+      "order": 17,
+      "defaultHidden": true,
+      "tz": 540
+    },
+    {
+      "id": "uma-cn",
+      "name": "闪耀！优俊少女",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/ca/23/bc/ca23bc1f-5dff-c21a-1881-66c48d02f5b2/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+      "order": 18,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "uma-jp",
+      "name": "赛马娘·日服",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/73/7c/0b/737c0b9b-6e90-8838-f0d3-fc7c576fbbad/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+      "order": 19,
+      "defaultHidden": false,
+      "tz": 540
+    },
+    {
+      "id": "uma-global",
+      "name": "赛马娘·国际服",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/8f/35/f4/8f35f477-05cb-0058-944a-0b796ee42583/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+      "order": 20,
+      "defaultHidden": false,
+      "tz": 0
+    },
+    {
+      "id": "p5x",
+      "name": "女神异闻录：夜幕魅影",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/03/1e/f4/031ef49f-b3d0-5bdd-077b-67d213f99c86/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+      "order": 21,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "nte",
+      "name": "异环",
+      "icon": "https://storage.moegirl.org.cn/moegirl/commons/8/8c/YH_APP.png!/fw/512",
+      "order": 22,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "gf2",
+      "name": "少女前线2：追放",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/6e/24/ac/6e24aca1-ce07-8fb9-41cd-181220b6cff2/AppIcon-1x_U007emarketing-0-8-0-85-220-0.png/512x512bb.jpg",
+      "order": 23,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "fgo",
+      "name": "Fate/Grand Order",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/db/d4/19/dbd4196a-68cb-8a74-ca0b-045d0795e10c/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+      "order": 24,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "pjsk",
+      "name": "初音未来：缤纷舞台·国服",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/00/5c/7c/005c7c99-d162-1dc9-2c38-f5e5a50619e1/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+      "order": 25,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "stellasora",
+      "name": "星塔旅人",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/54/82/12/548212d8-790c-241d-b11e-f588000cbaef/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+      "order": 26,
+      "defaultHidden": false,
+      "tz": 480
+    },
+    {
+      "id": "r1999",
+      "name": "重返未来：1999",
+      "icon": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/20/b1/e4/20b1e434-8c20-0346-a3aa-9051bf75a400/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+      "order": 27,
+      "defaultHidden": false,
+      "tz": 480
+    }
+  ]
+}
