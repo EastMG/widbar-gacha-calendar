@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using GachaCalendar.Core.Models;
@@ -351,20 +351,31 @@ public sealed class WidgetViewModel : INotifyPropertyChanged
 		{
 			var (end, game, rec, kind) = picked[i];
 			var title = kind == "卡池"
-				? (string.IsNullOrWhiteSpace(rec.Banner) ? "—" : rec.Banner)
+				? (string.IsNullOrWhiteSpace(rec.Roles)
+					? (string.IsNullOrWhiteSpace(rec.Banner) ? "—" : rec.Banner)
+					: RowBuilder.CleanRoleNames(rec.Roles, game.Id))
 				: (string.IsNullOrWhiteSpace(rec.Event) ? "—" : rec.Event);
 			var dates = kind == "卡池" ? rec.BannerDates : rec.EventDates;
 			var full = RowBuilder.FormatRemaining(end, now);
+			var left = end - now;
+			var deadline = end.Date == now.Date
+				? "今天"
+				: (end.Date == now.Date.AddDays(1) ? "明天" : end.ToString("MM-dd"));
 			Chips.Add(new ChipVm
 			{
 				GameId = game.Id,
 				GameName = ShortName(game.Name),
 				FullName = game.Name,
 				Kind = kind,
-				Remaining = RowBuilder.FormatShortRemaining(end - now),
+				Remaining = RowBuilder.FormatShortRemaining(left),
 				// 6 号强调色轮换，具体色值由外壳主题决定。
 				AccentIndex = i % 6,
-				Tip = $"{game.Name}\n{kind}：{title}\n{dates}\n还剩 {full}",
+				Title = title,
+				IsGacha = kind == "卡池",
+				Color = game.Color,
+				UrgencyLevel = left < TimeSpan.FromDays(1) ? 1 : (left < TimeSpan.FromDays(7) ? 2 : 0),
+				Deadline = deadline,
+				Tip = $"{game.Name}\n{kind}：{title}\n{dates}\n还剩 {full}\n截止：{end:MM-dd HH:mm}",
 			});
 		}
 

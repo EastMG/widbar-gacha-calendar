@@ -1,4 +1,4 @@
-using System.Runtime.InteropServices;
+﻿using System.Runtime.InteropServices;
 using GachaCalendar.Core.Models;
 using GachaCalendar.Core.ViewModels;
 using GachaWidget.Views;
@@ -38,15 +38,15 @@ public sealed class DesignPreviewWindow : Window
 			{
 				var strip = new Border
 				{
-					Width = 372,
+					Width = 620,
 					Height = 48,
 					Background = new SolidColorBrush(theme == "light" ? Color.FromArgb(255, 0xF9, 0xF9, 0xF9) : Color.FromArgb(255, 0x14, 0x14, 0x14)),
 					CornerRadius = new CornerRadius(8),
 					Child = new PreviewView(vm) { VerticalAlignment = VerticalAlignment.Center },
 				};
 				root.Children.Add(strip);
-				dipWidth = 392;
-				dipHeight = 68;
+				dipWidth = 640;
+				dipHeight = 72;
 				break;
 			}
 			case "settings":

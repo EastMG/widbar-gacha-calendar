@@ -83,3 +83,21 @@ public sealed class StateTextConverter : IValueConverter
 	public object ConvertBack(object value, Type targetType, object parameter, string language)
 		=> throw new NotSupportedException();
 }
+
+/// <summary>IsGacha → 类型标记色：卡池=强调蓝，活动=琥珀。</summary>
+public sealed class SideToBrushConverter : IValueConverter
+{
+	public object Convert(object value, Type targetType, object parameter, string language)
+	{
+		var isGacha = value is bool b && b;
+		var key = isGacha ? "AccentFillColorDefaultBrush" : "SystemFillColorCautionBrush";
+		if (Application.Current.Resources.TryGetValue(key, out var resource) && resource is Brush brush)
+		{
+			return brush;
+		}
+		return new SolidColorBrush(Color.FromArgb(255, 0x8A, 0x8A, 0x8A));
+	}
+
+	public object ConvertBack(object value, Type targetType, object parameter, string language)
+		=> throw new NotSupportedException();
+}

@@ -26,7 +26,7 @@
 |---|---|
 | 数据层 `GachaCalendar.Core`（feed / 缓存 / 目录 / 可见性 / 行文案 / 失败三态） | ✅ 268 条断言 |
 | WidBar 插件契约接入（`com.widbar.widget` AppExtension / `plugin.json` / 单项目 MSIX） | ✅ 构建 + 注册 + 被发现 |
-| 任务栏预览条（1–3 条最近结束 + 短倒计时 + 游戏色点） | ✅ 已实拍（`docs/images/design-preview.png`） |
+| 任务栏预览条（1–3 条两行 chip：游戏+倒计时+截止日 / 卡池·活动+内容标题） | ✅ 已实拍（`docs/images/design-preview.png`） |
 | 展开面板（近期 / 下一个截止 / 14 天迷你条游戏表 / 图例） | ✅ 已实拍（`docs/images/design-flyout.png`） |
 | 设置页（Fluent 卡片式：显隐 / 排序 / 预览条数 / 刷新 / 数据源 / 数据检查） | ✅ 已实拍（`docs/images/design-settings.png`） |
 | 数据源：静态快照 JSON（`gacha-calendar-app` CI，每 6h） | ✅ 已抓到真实数据（28 款，缓存落盘） |
@@ -50,7 +50,7 @@
 视觉对齐 DSH 版 `newPanel` 的日程视图语言（**颜色=游戏 / 图案=状态 / 文字=紧迫度**）+
 WinUI 3 Fluent 规范（主题资源、8px 网格、卡片、克制的分隔线）：
 
-| 任务栏预览条（372×48） | 展开面板（830×580） |
+| 任务栏预览条（582×48dip） | 展开面板（830×580） |
 |---|---|
 | ![任务栏预览条](docs/images/widbar-preview.png) | ![展开面板](docs/images/widbar-flyout.png) |
 
@@ -69,7 +69,7 @@ WinUI 3 Fluent 规范（主题资源、8px 网格、卡片、克制的分隔线�
 # 可选：--theme=light / --theme=dark（默认 dark）
 ```
 
-- `preview`（372dip 预览条）、`flyout`（830×580 面板）、`settings`（**宿主 chrome 1:1 模拟**：1120×820 窗口 + 48 标题栏 + 24/16/24/8 滚动区 + 底部保存/取消）三种；
+- `preview`（582dip 预览条）、`flyout`（830×580 面板）、`settings`（**宿主 chrome 1:1 模拟**：1120×820 窗口 + 48 标题栏 + 24/16/24/8 滚动区 + 底部保存/取消）三种；
 - 这是开发期 harness：不连宿主、不发网络请求，用内置示例数据渲染。
 
 

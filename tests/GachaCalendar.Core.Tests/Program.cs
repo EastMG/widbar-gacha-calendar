@@ -666,6 +666,7 @@ internal static class Program
 			("wuwa", Rec(banner: "旧池", bannerDates: "09-01 10:00 ~ 09-20 10:00")));
 
 		var vm = new WidgetViewModel();
+		catalog.Games.First(g => g.Id == "hsr").Color = "#6C6FE0";
 		vm.Apply(feed, new WidgetSettings { PreviewItems = 3 }, catalog, now);
 		Eq("3 个 chip（wuwa 无进行中）", 3, vm.Chips.Count);
 		True("HasChips", vm.HasChips);
@@ -682,6 +683,19 @@ internal static class Program
 		Eq("AccentIndex 递增", 1, vm.Chips[1].AccentIndex);
 		Eq("chip 游戏名（<=9 字符不截断）", "原神", vm.Chips[1].GameName);
 		Eq("chip 全名", "原神", vm.Chips[1].FullName);
+
+		// 任务栏 chip 的"信息量"断言：游戏之外还要有 内容标题 / 类型 / 截止 / 紧迫度 / 游戏色
+		Eq("chip 标题（卡池无 roles 时用 banner）", "「皓色轶英」", vm.Chips[0].Title);
+		True("卡池 chip IsGacha", vm.Chips[0].IsGacha);
+		Eq("卡池类型图案", "◆", vm.Chips[0].SideGlyph);
+		Eq("卡池截止日", "10-25", vm.Chips[0].Deadline);
+		Eq("3 天内 → 紧迫度 2", 2, vm.Chips[0].UrgencyLevel);
+		Eq("活动 chip 标题", "「往冥府的安魂歌」", vm.Chips[1].Title);
+		False("活动 chip IsGacha", vm.Chips[1].IsGacha);
+		Eq("活动类型图案", "⚑", vm.Chips[1].SideGlyph);
+		Eq("7 天外 → 紧迫度 0", 0, vm.Chips[1].UrgencyLevel);
+		Eq("chip 游戏代表色", "#6C6FE0", vm.Chips[0].Color);
+		Contains("chip Tip 含截止时间", "\n截止：", vm.Chips[0].Tip);
 
 		vm.Apply(feed, new WidgetSettings { PreviewItems = 2 }, catalog, now);
 		Eq("PreviewItems=2 上限生效", 2, vm.Chips.Count);

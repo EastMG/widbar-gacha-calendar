@@ -1,4 +1,4 @@
-namespace GachaCalendar.Core.ViewModels;
+﻿namespace GachaCalendar.Core.ViewModels;
 
 /// <summary>
 /// 任务栏预览条上的一个 chip（一款游戏当前最快结束的一项）。
@@ -25,4 +25,22 @@ public sealed class ChipVm
 
 	/// <summary>强调色索引 0..5（外壳按主题取色）。</summary>
 	public int AccentIndex { get; init; }
+
+	/// <summary>内容标题：卡池=UP 角色（BA 等特例已清洗），活动=活动名。</summary>
+	public string Title { get; init; } = "";
+
+	/// <summary>true=卡池，false=活动（外壳据此换左侧图案与颜色）。</summary>
+	public bool IsGacha { get; init; }
+
+	/// <summary>游戏代表色 #RRGGBB（来自 catalog；空串时外壳按游戏名哈希兜底）。</summary>
+	public string Color { get; init; } = "";
+
+	/// <summary>紧迫度：1 = 24 小时内，2 = 7 天内，0 = 更远（外壳据此给倒计时上色）。</summary>
+	public int UrgencyLevel { get; init; }
+
+	/// <summary>截止日期短文案：今天 / 明天 / MM-dd。</summary>
+	public string Deadline { get; init; } = "";
+
+	/// <summary>类型图案：◆ 卡池 / ⚑ 活动（任务栏上不占文字宽度也能分辨）。</summary>
+	public string SideGlyph => IsGacha ? "◆" : "⚑";
 }
