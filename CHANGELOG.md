@@ -2,6 +2,12 @@
 
 格式：每条一行，版本号与 `src/GachaWidget/GachaWidget.csproj` 的 `<Version>` 对应。
 
+## v0.1.18（2026-10-21）
+
+- style: 面板密度微调 —— 「近期」保留 4 条（不裁切、也不抢表格高度），「下一个截止」卡完整显示；
+  表格标题加 SemiBold 强化层级；图例改成中性色 + 图案语义（不再用强调色，避免误读"蓝色=卡池"）。
+- docs: `docs/images/design-flyout.png` 更新为 0.1.18 截图。
+
 ## v0.1.17（2026-10-21）
 
 - feat: **视觉与信息层级重做**（对齐 DSH `newPanel` 日程视图 + WinUI 3 Fluent）：

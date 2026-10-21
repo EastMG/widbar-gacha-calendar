@@ -18,7 +18,7 @@ namespace GachaWidget.Plugin;
 /// </summary>
 public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IWidgetFlyoutLifecycle
 {
-	private const string PluginVersion = "0.1.17";
+	private const string PluginVersion = "0.1.18";
 	private const string PluginId = "com.eastmg.gachacalendar";
 	private const string PluginName = "二游日历";
 

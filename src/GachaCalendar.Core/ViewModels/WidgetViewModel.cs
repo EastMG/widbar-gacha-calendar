@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using GachaCalendar.Core.Models;
@@ -396,7 +396,7 @@ public sealed class WidgetViewModel : INotifyPropertyChanged
 			return;
 		}
 
-		var next = ScheduleBuilder.Build(_feed, _catalog, _settings, now, recentLimit: 5);
+		var next = ScheduleBuilder.Build(_feed, _catalog, _settings, now, recentLimit: 4);
 		if (!ScheduleSnapshot.SameValue(_schedule, next))
 		{
 			Schedule = next;

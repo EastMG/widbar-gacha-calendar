@@ -78,7 +78,7 @@
         </Grid>
 
         <!-- ② 近期（按紧迫度）+ 下一个截止卡 -->
-        <Grid Grid.Row="1" ColumnSpacing="12" MaxHeight="190">
+        <Grid Grid.Row="1" ColumnSpacing="12" MaxHeight="168">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1.6*" />
                 <ColumnDefinition Width="1*" />
