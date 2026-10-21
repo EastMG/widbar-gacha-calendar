@@ -101,3 +101,28 @@ public sealed class SideToBrushConverter : IValueConverter
 	public object ConvertBack(object value, Type targetType, object parameter, string language)
 		=> throw new NotSupportedException();
 }
+
+/// <summary>预览条专用：1=红、2=琥珀，其余用主文字色（任务栏上不要一片灰）。</summary>
+public sealed class UrgencyStrongConverter : IValueConverter
+{
+	public object Convert(object value, Type targetType, object parameter, string language)
+	{
+		var level = value is int i ? i : 0;
+		var key = level switch
+		{
+			1 => "SystemFillColorCriticalBrush",
+			2 => "SystemFillColorCautionBrush",
+			_ => "TextFillColorPrimaryBrush",
+		};
+
+		if (Application.Current.Resources.TryGetValue(key, out var resource) && resource is Brush brush)
+		{
+			return brush;
+		}
+
+		return new SolidColorBrush(Color.FromArgb(255, 0x20, 0x20, 0x20));
+	}
+
+	public object ConvertBack(object value, Type targetType, object parameter, string language)
+		=> throw new NotSupportedException();
+}

@@ -18,18 +18,18 @@ namespace GachaWidget.Plugin;
 /// </summary>
 public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IWidgetFlyoutLifecycle
 {
-	private const string PluginVersion = "0.1.22";
+	private const string PluginVersion = "0.1.23";
 	private const string PluginId = "com.eastmg.gachacalendar";
 	private const string PluginName = "二游日历";
 
 	/// <summary>每个 chip 预留的逻辑宽度（含间距）；预览条总宽由当前 chip 数决定。</summary>
-	private const int ChipWidth = 180;
+	private const int ChipWidth = 136;
 
 	/// <summary>chip 之间的间距（与 PreviewView 的 StackPanel Spacing 一致）。</summary>
-	private const int ChipSpacing = 8;
+	private const int ChipSpacing = 18;
 
 	/// <summary>预览条左右内边距（与 PreviewView 的 Padding 一致）。</summary>
-	private const int PreviewPadding = 12;
+	private const int PreviewPadding = 16;
 
 	private IWidgetContext? _context;
 	private DispatcherQueue? _queue;

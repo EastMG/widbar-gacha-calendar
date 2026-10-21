@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using GachaCalendar.Core.Models;
@@ -373,6 +373,7 @@ public sealed class WidgetViewModel : INotifyPropertyChanged
 				Title = title,
 				IsGacha = kind == "卡池",
 				Color = game.Color,
+				IconUrl = game.Icon,
 				UrgencyLevel = left < TimeSpan.FromDays(1) ? 1 : (left < TimeSpan.FromDays(7) ? 2 : 0),
 				Deadline = deadline,
 				Tip = $"{game.Name}\n{kind}：{title}\n{dates}\n还剩 {full}\n截止：{end:MM-dd HH:mm}",

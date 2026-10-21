@@ -41,6 +41,9 @@ public sealed class ChipVm
 	/// <summary>截止日期短文案：今天 / 明天 / MM-dd。</summary>
 	public string Deadline { get; init; } = "";
 
+	/// <summary>游戏图标 URL（任务栏 chip 用图标代替文字承担"是哪款游戏"）。</summary>
+	public string IconUrl { get; init; } = "";
+
 	/// <summary>类型图案：◆ 卡池 / ⚑ 活动（任务栏上不占文字宽度也能分辨）。</summary>
 	public string SideGlyph => IsGacha ? "◆" : "⚑";
 }

@@ -1,8 +1,9 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <UserControl
     x:Class="GachaWidget.Views.PreviewView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:GachaWidget.Controls"
     xmlns:conv="using:GachaWidget.Converters"
     xmlns:vm="using:GachaCalendar.Core.ViewModels"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -12,16 +13,19 @@
     <UserControl.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibility" />
         <conv:HexToBrushConverter x:Key="HexBrush" />
-        <conv:UrgencyToBrushConverter x:Key="UrgencyBrush" />
+        <conv:GameNameToBrushConverter x:Key="GameBrush" />
+        <conv:UrgencyStrongConverter x:Key="UrgencyStrong" />
         <conv:SideToBrushConverter x:Key="SideBrush" />
+        <conv:FirstCharConverter x:Key="FirstChar" />
     </UserControl.Resources>
 
-    <!-- 根透明：任务栏背景由 WidBar 负责，不要自己画。
-         每个 chip 两行：① 色点 + 游戏名 + 短倒计时（紧迫度上色）② 类型标记 + 内容标题 + 截止日。 -->
+    <!-- 任务栏原生观感：不画卡片/边框，直接"图标 + 两行文字"。
+         对齐 Windows 11 天气小组件的形态：图标承担"是什么"，主数字（剩余时间）承担"多急"，
+         次要文字承担"具体内容"。 -->
     <StackPanel
         Orientation="Horizontal"
-        Spacing="8"
-        Padding="6,0"
+        Spacing="18"
+        Padding="10,0"
         VerticalAlignment="Center">
 
         <!-- 数据非实时时只留一个小圆点（比文字省空间），含义放 tooltip -->
@@ -47,72 +51,54 @@
             ItemsSource="{x:Bind Vm.Chips, Mode=OneWay}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <StackPanel Orientation="Horizontal" Spacing="8" />
+                    <StackPanel Orientation="Horizontal" Spacing="18" />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:ChipVm">
-                    <Border
-                        Width="180"
-                        Padding="9,1"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="9"
+                    <Grid
+                        MaxWidth="136"
+                        ColumnSpacing="6"
                         ToolTipService.ToolTip="{x:Bind Tip}">
-                        <Grid RowSpacing="0">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
 
-                            <!-- ① 游戏 + 倒计时 + 截止日 -->
-                            <Grid ColumnSpacing="6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <Border
-                                    Width="6"
-                                    Height="6"
-                                    VerticalAlignment="Center"
-                                    Background="{x:Bind Color, Converter={StaticResource HexBrush}}"
-                                    CornerRadius="3" />
+                        <!-- 游戏图标：任务栏上比文字更快识别"是哪款" -->
+                        <controls:GameIcon
+                            Width="20"
+                            Height="20"
+                            VerticalAlignment="Center"
+                            Glyph="{x:Bind FullName, Converter={StaticResource FirstChar}}"
+                            IconUrl="{x:Bind IconUrl}" />
+
+                        <StackPanel
+                            Grid.Column="1"
+                            VerticalAlignment="Center"
+                            Spacing="-1">
+                            <!-- 主信息：还剩多久 + 截止日（紧迫度上色） -->
+                            <StackPanel Orientation="Horizontal" Spacing="5">
                                 <TextBlock
-                                    Grid.Column="1"
-                                    VerticalAlignment="Center"
-                                    FontSize="11"
+                                    FontSize="12.5"
                                     FontWeight="SemiBold"
-                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                    Text="{x:Bind GameName}"
-                                    TextTrimming="CharacterEllipsis" />
-                                <TextBlock
-                                    Grid.Column="2"
-                                    VerticalAlignment="Center"
-                                    FontSize="10.5"
-                                    FontWeight="SemiBold"
-                                    Foreground="{x:Bind UrgencyLevel, Converter={StaticResource UrgencyBrush}}"
+                                    Foreground="{x:Bind UrgencyLevel, Converter={StaticResource UrgencyStrong}}"
                                     Text="{x:Bind Remaining}" />
                                 <TextBlock
-                                    Grid.Column="3"
-                                    VerticalAlignment="Center"
+                                    VerticalAlignment="Bottom"
                                     FontSize="9.5"
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                     Text="{x:Bind Deadline}" />
-                            </Grid>
-
-                            <!-- ② 卡池/活动 + 内容标题（长角色列表允许折两行） -->
-                            <Grid Grid.Row="1" ColumnSpacing="6">
+                            </StackPanel>
+                            <!-- 次信息：◆/⚑ 类型 + 内容标题 -->
+                            <Grid ColumnSpacing="4">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock
-                                    VerticalAlignment="Top"
-                                    Margin="0,2,0,0"
-                                    FontSize="9"
+                                    VerticalAlignment="Center"
+                                    FontSize="8"
                                     Foreground="{x:Bind IsGacha, Converter={StaticResource SideBrush}}"
                                     Text="{x:Bind SideGlyph}" />
                                 <TextBlock
@@ -120,13 +106,12 @@
                                     VerticalAlignment="Center"
                                     FontSize="10"
                                     Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                    MaxLines="2"
+                                    MaxWidth="104"
                                     Text="{x:Bind Title}"
-                                    TextTrimming="CharacterEllipsis"
-                                    TextWrapping="Wrap" />
+                                    TextTrimming="CharacterEllipsis" />
                             </Grid>
-                        </Grid>
-                    </Border>
+                        </StackPanel>
+                    </Grid>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>

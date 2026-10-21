@@ -38,14 +38,14 @@ public sealed class DesignPreviewWindow : Window
 			{
 				var strip = new Border
 				{
-					Width = 620,
+					Width = 500,
 					Height = 48,
 					Background = new SolidColorBrush(theme == "light" ? Color.FromArgb(255, 0xF9, 0xF9, 0xF9) : Color.FromArgb(255, 0x14, 0x14, 0x14)),
 					CornerRadius = new CornerRadius(8),
 					Child = new PreviewView(vm) { VerticalAlignment = VerticalAlignment.Center },
 				};
 				root.Children.Add(strip);
-				dipWidth = 640;
+				dipWidth = 520;
 				dipHeight = 72;
 				break;
 			}
