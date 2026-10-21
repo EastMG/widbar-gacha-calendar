@@ -43,3 +43,19 @@ public sealed class StringNotEmptyToVisibilityConverter : IValueConverter
 	public object ConvertBack(object value, Type targetType, object parameter, string language)
 		=> throw new NotSupportedException();
 }
+
+/// <summary>枚举值名与 ConverterParameter 相等 → Visible（用于按数据状态显示"示例/离线"标记）。</summary>
+public sealed class EnumEqualsToVisibilityConverter : IValueConverter
+{
+	public object Convert(object value, Type targetType, object parameter, string language)
+	{
+		var name = value?.ToString() ?? "";
+		var expected = parameter as string ?? "";
+		return string.Equals(name, expected, StringComparison.OrdinalIgnoreCase)
+			? Visibility.Visible
+			: Visibility.Collapsed;
+	}
+
+	public object ConvertBack(object value, Type targetType, object parameter, string language)
+		=> throw new NotSupportedException();
+}

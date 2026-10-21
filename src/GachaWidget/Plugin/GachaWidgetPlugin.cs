@@ -18,7 +18,7 @@ namespace GachaWidget.Plugin;
 /// </summary>
 public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IWidgetFlyoutLifecycle
 {
-	private const string PluginVersion = "0.1.10";
+	private const string PluginVersion = "0.1.11";
 	private const string PluginId = "com.eastmg.gachacalendar";
 	private const string PluginName = "二游日历";
 
@@ -66,12 +66,18 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 	{
 		Program.Log($"InitializeAsync begin; previewVisible={context.IsPreviewVisible}; dataDir={context.DataDirectory}");
 		_context = context;
-		GachaWidget.Diagnostics.PluginLog.Initialize(context.DataDirectory);
+
+		// 宿主给的 DataDirectory 未必可写（widget 与宿主是两个包），先探出真正可写的位置。
+		var workDir = GachaWidget.Diagnostics.RuntimePaths.Resolve(context.DataDirectory, context.InstanceId);
+		GachaWidget.Diagnostics.PluginLog.Initialize(workDir);
+		GachaWidget.Diagnostics.PluginLog.Write(
+			$"dirs: host='{context.DataDirectory}' -> work='{workDir}'");
+
 		_queue = DispatcherQueue.GetForCurrentThread();
 		_catalogStore = new CatalogStore();
 		_vm = new WidgetViewModel(_catalogStore.Catalog);
 		_settings = WidgetSettings.FromJson(context.SettingsJson, _catalogStore.Catalog);
-		_feedClient = new FeedClient(cacheDirectory: context.DataDirectory);
+		_feedClient = new FeedClient(cacheDirectory: workDir);
 		_cts = new CancellationTokenSource();
 		_previewVisible = context.IsPreviewVisible;
 		context.PreviewVisibilityChanged += OnPreviewVisibilityChanged;
@@ -316,7 +322,7 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 		try
 		{
 			// 独立缓存目录：自检不应覆盖正常缓存。
-			using var probe = new FeedClient(cacheDirectory: Path.Combine(_context.DataDirectory, "selfcheck"));
+			using var probe = new FeedClient(cacheDirectory: Path.Combine(GachaWidget.Diagnostics.RuntimePaths.Chosen ?? _context.DataDirectory, "selfcheck"));
 			var result = await probe.FetchAsync(url);
 			if (!result.Ok || result.Document is null)
 			{

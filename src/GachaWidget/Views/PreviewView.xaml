@@ -11,10 +11,32 @@
 
     <UserControl.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+        <conv:EnumEqualsToVisibilityConverter x:Key="EnumEquals" />
     </UserControl.Resources>
 
     <!-- 根透明：任务栏背景由 WidBar 负责，不要自己画 -->
-    <Grid Background="Transparent" Padding="4,0" VerticalAlignment="Center">
+    <StackPanel
+        Orientation="Horizontal"
+        Spacing="6"
+        Padding="4,0"
+        VerticalAlignment="Center">
+
+        <!-- 数据不是最新时给一个小标记，避免把"示例/缓存"当成实时数据 -->
+        <TextBlock
+            VerticalAlignment="Center"
+            FontSize="10"
+            Foreground="{ThemeResource SystemFillColorCautionBrush}"
+            Text="示例"
+            ToolTipService.ToolTip="网络暂不可用，当前显示内置示例数据"
+            Visibility="{x:Bind Vm.Status, Mode=OneWay, Converter={StaticResource EnumEquals}, ConverterParameter=Sample}" />
+        <TextBlock
+            VerticalAlignment="Center"
+            FontSize="10"
+            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+            Text="缓存"
+            ToolTipService.ToolTip="网络暂不可用，当前显示上次成功缓存的数据"
+            Visibility="{x:Bind Vm.Status, Mode=OneWay, Converter={StaticResource EnumEquals}, ConverterParameter=Cached}" />
+
         <ItemsControl
             VerticalAlignment="Center"
             ItemsSource="{x:Bind Vm.Chips, Mode=OneWay}">
@@ -62,5 +84,5 @@
             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
             Text="暂无进行中"
             Visibility="{x:Bind Vm.HasNoChips, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-    </Grid>
+    </StackPanel>
 </UserControl>

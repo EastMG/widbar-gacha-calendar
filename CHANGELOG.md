@@ -1,7 +1,22 @@
-# 变更记录
+﻿# 变更记录
 
 格式：每条一行，版本号与 `src/GachaWidget/GachaWidget.csproj` 的 `<Version>` 对应。
 
+## v0.1.11（2026-10-21）
+
+- fix: 宿主给的 DataDirectory 未必可写（widget 与宿主是两个 MSIX 包）→ 新增
+  `RuntimePaths`：宿主目录 → 本包 LocalState → 临时目录，逐级做写测试，缓存与日志落到真正可写的位置。
+- feat: 预览条在数据非实时时显示「示例 / 缓存」小标记，不再把兜底数据伪装成实时。
+- feat: 引入 `tools/FeedProbe`：用与 widget 完全相同的 `FeedClient` 抓真实 feed，
+  区分"网络/TLS 问题"与"widget 运行环境问题"（实测 Fresh、28 条、1.2s）。
+- test: `tools/smoke-host-pipe.ps1`（假宿主握手回归）。
+
+## v0.1.10（2026-10-21）
+
+- feat: 运行期诊断日志落到 `DataDirectory\widget.log`（初始化、首帧来源、刷新 status/error/耗时/条数、
+  面板/设置创建）。
+- docs: docs/03 §7 记录"已在 WidBar 内跑通"的 SDK 日志证据与两个真实坑（未签名包 Low IL、
+  自诊断探针抢占管道）。
 ## v0.1.4（2026-10-21）
 
 - build: WindowsAppSDK 改为自包含（修复框架依赖模式下 `REGDB_E_CLASSNOTREG` 无法启动），

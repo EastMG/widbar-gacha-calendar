@@ -43,7 +43,7 @@
     <SatelliteResourceLanguages>zh-Hans;en</SatelliteResourceLanguages>
     <NeutralLanguage>zh-Hans</NeutralLanguage>
 
-    <Version>0.1.10</Version>
+    <Version>0.1.11</Version>
     <Authors>EastMG</Authors>
     <Company>EastMG</Company>
     <Product>二游日历 for WidBar</Product>
@@ -55,7 +55,7 @@
     <WidBarPluginName>二游日历</WidBarPluginName>
     <WidBarPluginDescription>28 款二游的卡池与活动倒计时，常驻 Windows 11 任务栏。</WidBarPluginDescription>
     <WidBarPluginCategory>Information</WidBarPluginCategory>
-    <WidBarPluginVersion>0.1.10</WidBarPluginVersion>
+    <WidBarPluginVersion>0.1.11</WidBarPluginVersion>
     <WidBarPluginPreviewWidth>252</WidBarPluginPreviewWidth>
     <WidBarPluginConfigurable>true</WidBarPluginConfigurable>
     <WidBarPluginMinHostVersion>1.0.0</WidBarPluginMinHostVersion>
