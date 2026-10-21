@@ -1,4 +1,4 @@
-﻿using GachaCalendar.Core.Models;
+using GachaCalendar.Core.Models;
 using GachaCalendar.Core.Services;
 using GachaCalendar.Core.ViewModels;
 using GachaWidget.Views;
@@ -141,7 +141,7 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 		_preview = new PreviewView(_vm);
 
 		// 预览窗口创建完成后再请宿主重排一次：初始化阶段的请求发生在预览创建之前，宿主会忽略。
-		_queue?.TryEnqueue(_ => _context?.RequestPreviewRefresh());
+		_queue?.TryEnqueue(() => _context?.RequestPreviewRefresh());
 		return _preview;
 	}
 

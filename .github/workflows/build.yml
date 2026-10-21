@@ -18,18 +18,25 @@ jobs:
         with:
           dotnet-version: '10.0.x'
 
+      - name: Setup MSBuild (Visual Studio)
+        uses: microsoft/setup-msbuild@v2
+
       - name: Core tests（零 NuGet 依赖的 console 运行器）
         run: dotnet run --project tests\GachaCalendar.Core.Tests -c Release
 
       - name: Build widget（单项目 MSIX，layout）
         run: dotnet build src\GachaWidget\GachaWidget.csproj -c Release -p:Platform=x64
 
-      - name: Pack MSIX (StoreUpload)
+      # 说明：dotnet CLI 生成 .msixupload 会在 WinAppSdkCreateAppStoreContainer 任务上
+      # 因 System.Security.Permissions（VS 专有依赖）崩掉，必须用 VS 的 MSBuild 出包。
+      - name: Pack MSIX (StoreUpload, Visual Studio MSBuild)
         run: >
-          dotnet build src\GachaWidget\GachaWidget.csproj -c Release -p:Platform=x64
-          -p:GenerateAppxPackageOnBuild=true
-          -p:UapAppxPackageBuildMode=StoreUpload
-          -p:AppxPackageSigningEnabled=false
+          msbuild src\GachaWidget\GachaWidget.csproj
+          /restore /p:Configuration=Release /p:Platform=x64
+          /p:GenerateAppxPackageOnBuild=true
+          /p:UapAppxPackageBuildMode=StoreUpload
+          /p:AppxPackageSigningEnabled=false
+          /nologo /v:minimal
 
       - name: Upload MSIX artifacts
         uses: actions/upload-artifact@v4
