@@ -92,10 +92,13 @@ App.OnLaunched → WidgetHostApplication 建连接 → CreatePlugin()   // 每�
   日服/国际服的实际绝对时刻可能差 1 小时，这一点在 v1 接入 core 的 `tz` 后修正。
 - 图标是外链（moegirl 等），失败时退化为"首字 + 色块"，**不能阻塞行渲染**。
 
-## 6. 构建与侧载（本机 Low IL 环境的注意点）
+## 6. 构建与侧载（本机环境实测记录）
 
-- 本机 DSH 会话运行在 **Low 完整性级别**，MakePri.exe 写 `%TEMP%`（Medium IL）会被拒（0x80070005）。
-  构建前必须把 `TEMP`/`TMP` 指到工作区内目录：
+- 本机 DSH 会话运行在 **Low 完整性级别**：MakePri.exe 写 `%TEMP%`（Medium IL）会被拒（0x80070005），
+  所以 `TEMP`/`TMP` 必须指向工作区内目录。
+- 一键构建 + 注册：`tools\build-and-register.ps1`（已封装上述环境变量与"先移除旧包"的规避）。
+  实测输出：`PFN=EastMG.GachaCalendar_0.1.4.0_x64__8c3jes7x0pqng`、`Status=Ok`、layout 95.67MB。
+- 手工等价命令：
 
 ```powershell
 $env:TEMP='F:\DeepSeek\DeepSeek-Workplace\DSH-Workplace-01\widbar-gacha-calendar\.tmp'
@@ -103,7 +106,59 @@ $env:TMP=$env:TEMP
 $env:DOTNET_CLI_HOME='F:\DeepSeek\DeepSeek-Workplace\DSH-Workplace-01\.dotnet-home'
 $env:NUGET_PACKAGES='F:\DeepSeek\DeepSeek-Workplace\DSH-Workplace-01\.nuget-packages'
 dotnet build src\GachaWidget\GachaWidget.csproj -c Release -p:Platform=x64
+Add-AppxPackage -Register <layout>\AppxManifest.xml
 ```
 
-- 侧载：开发者模式下 `Add-AppxPackage -Register <layout>\AppxManifest.xml`；若被 Low IL 挡住，
-  在**普通终端**用同一命令注册（`docs/05-验收清单.md` 有逐步清单）。
+- 包的两种形态（都是单项目 MSIX，不需要 `.wapproj`）：
+  - `dotnet build`（默认）：出 layout，用 `-Register` 松散注册，适合快速迭代；
+  - `-p:GenerateAppxPackageOnBuild=true -p:UapAppxPackageBuildMode=SideloadOnly`：出 `.msix`
+    （自包含 WindowsAppSDK 后约 **32.7MB**），签名后 `Add-AppxPackage -Path` 正式安装。
+  - `.msixupload`（StoreUpload）在本机 dotnet CLI 会因 `Microsoft.Build.Msix` 依赖 VS/net472 收尾崩溃，
+    **发版走 CI**（GitHub Actions windows-latest 带 VS）。
+
+- **WindowsAppSDK 必须自包含**（`WindowsAppSDKSelfContained=true`）。框架依赖模式在本机实测：
+  自动初始化阶段抛 `REGDB_E_CLASSNOTREG`（`DeploymentInitializeOptions`），进程直接退出。
+  代价是包体（msix 33MB / layout 96MB），已用"只引 WinUI 子包 + 剔除 AI/ML"压到可接受范围
+  （裁剪前后 85.3MB → 32.7MB，见 `_widbar_spike/REPORT.md §10`）。
+
+## 7. 本机联调现状与阻塞点（2026-10-21 实测）
+
+**能用**：构建 → 注册 → WidBar 发现。
+WidBar 日志证据：
+
+```
+TRACE [PluginLoader] AppExtension found: 'gacha-calendar' from ...\win-x64\Public
+TRACE [PluginLoader] Discovered 'com.eastmg.gachacalendar' v0.1.4 from ...
+```
+
+WidBar 还生成了 `LocalState\PluginIcons\EastMG_GachaCalendar_8c3jes7x0pqng_gacha-calendar_0.1.4.0.png`。
+
+**不能用**：宿主拉起 widget 进程后，进程连不上宿主管道：
+
+```
+[PluginProcess] Activated 'EastMG.GachaCalendar_8c3jes7x0pqng!App' (pid ...)
+[PluginProcess] 'com.eastmg.gachacalendar' faulted: Plugin process exited.
+```
+
+进程内（`startup.log`，本项目加的启动诊断）定位到：
+
+```
+pipe probe FAILED: widbar.com.eastmg.gachacalendar.<guid>:
+  UnauthorizedAccessException: Access to the path is denied.
+```
+
+即 `NamedPipeClientStream.Connect` 被 ACL 拒绝，SDK 随后退出。
+**同一会话里官方 Store 组件（systemmetrics / weather）状态是 `-> Running`**，
+同时用官方模板 `dotnet new widbar-widget` 生成的最小 widget（松散注册）也一样失败 ——
+所以这不是本项目代码的问题，而是**松散注册的开发包在 WidBar 1.2.8 上连不上宿主管道**。
+
+**下一步（需要普通桌面终端 / 用户操作）**：用"签名 + 正式安装"验证是否为签名/部署形态导致：
+
+```powershell
+# 普通终端（不要 DSH 会话；Low IL 下 CryptoAPI 受限，signtool 会报 0x80090010）
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\install-signed.ps1
+```
+
+首次需要管理员把自签证书（`CN=EastMG`）导入 `LocalMachine\TrustedPeople`；之后重复步骤即可。
+若签名安装后仍是 `pipe probe FAILED`，就是宿主对第三方组件的支持问题，需向 WidBar 反馈（Discord）。
+

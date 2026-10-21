@@ -1,4 +1,4 @@
-using GachaCalendar.Core.Models;
+﻿using GachaCalendar.Core.Models;
 using GachaCalendar.Core.Services;
 using GachaCalendar.Core.ViewModels;
 using GachaWidget.Views;
@@ -18,7 +18,7 @@ namespace GachaWidget.Plugin;
 /// </summary>
 public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IWidgetFlyoutLifecycle
 {
-	private const string PluginVersion = "0.1.0";
+	private const string PluginVersion = "0.1.4";
 	private const string PluginId = "com.eastmg.gachacalendar";
 	private const string PluginName = "二游日历";
 
@@ -64,6 +64,7 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 
 	public override async Task InitializeAsync(IWidgetContext context)
 	{
+		Program.Log($"InitializeAsync begin; previewVisible={context.IsPreviewVisible}; dataDir={context.DataDirectory}");
 		_context = context;
 		_queue = DispatcherQueue.GetForCurrentThread();
 		_catalogStore = new CatalogStore();
@@ -99,13 +100,17 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 
 		StartTickTimer();
 
+		Program.Log("InitializeAsync: first frame applied, starting background refresh");
+
 		// 首次刷新放到后台，不阻塞宿主创建预览。
 		_ = RefreshAsync(force: false);
 		await Task.CompletedTask;
+		Program.Log("InitializeAsync end");
 	}
 
 	public override Microsoft.UI.Xaml.UIElement? CreatePreviewContent()
 	{
+		Program.Log($"CreatePreviewContent; vm={(_vm is null ? "null" : "ok")}; chips={_vm?.Chips.Count}");
 		if (_vm is null) return null;
 		_preview = new PreviewView(_vm);
 		return _preview;
@@ -113,6 +118,7 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 
 	public override Microsoft.UI.Xaml.UIElement CreateFlyoutContent()
 	{
+		Program.Log("CreateFlyoutContent");
 		_flyout = new FlyoutView(_vm ?? throw new InvalidOperationException("InitializeAsync 尚未完成"));
 		_flyout.RefreshRequested += (_, _) => _ = RefreshAsync(force: true);
 		return _flyout;

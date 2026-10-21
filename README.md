@@ -21,13 +21,26 @@
 
 | 能力 | 状态 |
 |---|---|
-| WidBar 插件契约接入（`com.widbar.widget` AppExtension / `plugin.json`） | 🚧 |
-| 任务栏预览条（1–3 条最近结束 + 短倒计时） | 🚧 |
-| 展开面板（28 款六列：卡池 / 起止 / 活动 / 倒计时 / 失败三态） | 🚧 |
-| 设置页（显隐 / 排序 / 预览条数 / 刷新间隔 / 数据源 / 数据自检） | 🚧 |
-| 数据源：静态快照 JSON（`gacha-calendar-app` CI，每 6h） | 🚧 |
+| 数据层 `GachaCalendar.Core`（feed / 缓存 / 目录 / 可见性 / 行文案 / 失败三态） | ✅ 268 条断言 |
+| WidBar 插件契约接入（`com.widbar.widget` AppExtension / `plugin.json` / 单项目 MSIX） | ✅ 构建 + 注册 + 被发现 |
+| 任务栏预览条（1–3 条最近结束 + 短倒计时） | ✅ 代码完成，待宿主联调 |
+| 展开面板（28 款六列：卡池 / 起止 / 活动 / 倒计时 / 失败三态） | ✅ 代码完成，待宿主联调 |
+| 设置页（显隐 / 排序 / 预览条数 / 刷新间隔 / 数据源 / 数据检查） | ✅ 代码完成，待宿主联调 |
+| 数据源：静态快照 JSON（`gacha-calendar-app` CI，每 6h） | ✅ |
+| 宿主联调（WidBar 1.2.8 拉起进程并连上管道） | ⛔ 见下「本机联调现状」 |
 | 数据源：内嵌 `gacha-calendar-core` 各端自行抓取（v1） | 📋 |
 | 上架微软商店 + 进 WidBar 组件目录 | 📋 |
+
+### 本机联调现状（2026-10-21）
+
+- ✅ 构建 → 注册 → **WidBar 能发现**：日志 `Discovered 'com.eastmg.gachacalendar' v0.1.4`，并生成了插件图标。
+- ⛔ 宿主拉起 widget 进程后，进程连宿主管道被 ACL 拒绝（`UnauthorizedAccessException`），
+  SDK 退出 → WidBar 显示 `Plugin process exited`。
+- 同一会话官方 Store 组件正常（`-> Running`）；官方模板生成的最小 widget 松散注册后也一样失败
+  → 怀疑是**松散注册的开发包**在 WidBar 1.2.8 上的限制，不是本项目代码问题。
+- 下一步：在**普通桌面终端**跑 `tools\install-signed.ps1`（签名 + 正式安装）验证；
+  细节与证据见 [`docs/03`](docs/03-WidBar插件契约.md) §7、[`docs/05`](docs/05-验收清单.md) §D。
+
 
 ## 数据从哪来
 
