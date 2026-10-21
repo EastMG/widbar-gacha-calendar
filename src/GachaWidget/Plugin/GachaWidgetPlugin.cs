@@ -1,4 +1,4 @@
-﻿using GachaCalendar.Core.Models;
+using GachaCalendar.Core.Models;
 using GachaCalendar.Core.Services;
 using GachaCalendar.Core.ViewModels;
 using GachaWidget.Views;
@@ -18,12 +18,15 @@ namespace GachaWidget.Plugin;
 /// </summary>
 public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IWidgetFlyoutLifecycle
 {
-	private const string PluginVersion = "0.1.12";
+	private const string PluginVersion = "0.1.13";
 	private const string PluginId = "com.eastmg.gachacalendar";
 	private const string PluginName = "二游日历";
 
 	/// <summary>每个 chip 预留的逻辑宽度（含间距）；预览条总宽由当前 chip 数决定。</summary>
-	private const int ChipWidth = 112;
+	private const int ChipWidth = 124;
+
+	/// <summary>预览条左右内边距（与 PreviewView 的 Padding 一致）。</summary>
+	private const int PreviewPadding = 12;
 
 	private IWidgetContext? _context;
 	private DispatcherQueue? _queue;
@@ -52,7 +55,7 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 		{
 			var count = _vm?.Chips.Count ?? 0;
 			if (count <= 0) count = Math.Clamp(_settings.PreviewItems, 1, 3);
-			return Math.Clamp(count, 1, 3) * ChipWidth + 8;
+			return Math.Clamp(count, 1, 3) * ChipWidth + PreviewPadding;
 		}
 	}
 
@@ -120,6 +123,11 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 
 		// 首次刷新放到后台，不阻塞宿主创建预览。
 		_ = RefreshAsync(force: false);
+
+		// 请求宿主重排一次：plugin.json 里的 previewWidth 只是初始值，实际宽度按当前 chip 数算
+		// （否则 1~3 条之间变化时预览会被裁掉/留白）。
+		_context?.RequestPreviewRefresh();
+
 		await Task.CompletedTask;
 		Program.Log("InitializeAsync end");
 	}

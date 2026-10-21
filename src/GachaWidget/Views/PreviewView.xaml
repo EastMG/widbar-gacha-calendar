@@ -63,9 +63,11 @@
                                 VerticalAlignment="Center" />
                             <TextBlock
                                 VerticalAlignment="Center"
+                                MaxWidth="76"
                                 FontSize="12"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                Text="{x:Bind GameName}" />
+                                Text="{x:Bind GameName}"
+                                TextTrimming="CharacterEllipsis" />
                             <TextBlock
                                 VerticalAlignment="Center"
                                 FontSize="12"
