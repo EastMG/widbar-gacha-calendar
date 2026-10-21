@@ -56,6 +56,23 @@ $proj = Join-Path $repo 'src\GachaWidget\GachaWidget.csproj'
 $manifestPath = Join-Path $repo 'src\GachaWidget\Package.appxmanifest'
 $publisher = 'CN=EastMG'
 
+# ---- 前置检查（早失败，不要等构建完才报错） ----
+if (-not (Get-Command Add-AppxPackage -ErrorAction SilentlyContinue)) {
+    throw '当前 PowerShell 没有 Appx 模块（Add-AppxPackage）。请改用 Windows PowerShell 5.1，或安装 Appx 模块后重试。'
+}
+
+$isAdmin = (New-Object Security.Principal.WindowsPrincipal(
+    [Security.Principal.WindowsIdentity]::GetCurrent())).IsInRole(
+    [Security.Principal.WindowsBuiltInRole]::Administrator)
+
+if (-not $PfxPath -and -not $CertThumbprint -and -not $isAdmin) {
+    $alreadyTrusted = Get-ChildItem Cert:\LocalMachine\TrustedPeople -ErrorAction SilentlyContinue |
+        Where-Object { $_.Subject -eq $publisher }
+    if (-not $alreadyTrusted) {
+        throw "首次签名安装需要管理员权限：把自签证书（$publisher）导入 LocalMachine\TrustedPeople。`n请用【以管理员身份运行】打开 PowerShell / Windows Terminal 后重跑本脚本（只需一次）。"
+    }
+}
+
 # ---- 构建环境（本机 MakePri 需要 TEMP 在工作区内） ----
 $env:TEMP = Join-Path $repo '.tmp'
 $env:TMP = $env:TEMP
