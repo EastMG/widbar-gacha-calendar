@@ -26,10 +26,6 @@ public static class Program
 		TaskScheduler.UnobservedTaskException += (_, e) =>
 			Log("UNOBSERVED(Task): " + e.Exception);
 
-		// 诊断：宿主用 --widbar-pipe=<name> 传管道名，SDK 启动后会在 OnLaunched 里连它。
-		// 这里先自己连一次，把"连不上"的具体异常（访问被拒 / 找不到管道）记下来。
-		ProbeHostPipe(args);
-
 		try
 		{
 			Log("InitializeComWrappers ...");
@@ -64,39 +60,43 @@ public static class Program
 
 	internal static void Log(string message)
 	{
-		try
+		var line = $"{DateTime.Now:HH:mm:ss.fff} {message}{Environment.NewLine}";
+		foreach (var path in LogPaths())
 		{
-			var path = Path.Combine(AppContext.BaseDirectory, "startup.log");
-			File.AppendAllText(path, $"{DateTime.Now:HH:mm:ss.fff} {message}{Environment.NewLine}", Encoding.UTF8);
-		}
-		catch
-		{
-			// 安装目录不可写（正式包）时忽略：这只是开发期诊断。
+			try
+			{
+				File.AppendAllText(path, line, Encoding.UTF8);
+				return;
+			}
+			catch
+			{
+				// 试下一个候选位置：正式安装目录是只读的，退到用户可写目录。
+			}
 		}
 	}
 
-	private static void ProbeHostPipe(string[] args)
+	/// <summary>日志候选路径：开发布局可写安装目录 → %LOCALAPPDATA%\WidBarGachaCalendar → %TEMP%。</summary>
+	private static IEnumerable<string> LogPaths()
 	{
-		var pipeArg = args.FirstOrDefault(a =>
-			a.StartsWith("--widbar-pipe=", StringComparison.OrdinalIgnoreCase));
-		if (pipeArg is null)
-		{
-			Log("no --widbar-pipe argument (standalone launch)");
-			return;
-		}
-
-		var name = pipeArg["--widbar-pipe=".Length..];
+		string? local = null;
 		try
 		{
-			using var client = new System.IO.Pipes.NamedPipeClientStream(
-				".", name, System.IO.Pipes.PipeDirection.InOut,
-				System.IO.Pipes.PipeOptions.Asynchronous);
-			client.Connect(3000);
-			Log($"pipe probe OK: {name}");
+			local = Path.Combine(
+				Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+				"WidBarGachaCalendar");
+			Directory.CreateDirectory(local);
 		}
-		catch (Exception ex)
+		catch
 		{
-			Log($"pipe probe FAILED: {name}: {ex.GetType().Name}: {ex.Message}");
+			local = null;
 		}
+
+		if (!string.IsNullOrEmpty(local))
+		{
+			yield return Path.Combine(local, "startup.log");
+		}
+
+		yield return Path.Combine(AppContext.BaseDirectory, "startup.log");
+		yield return Path.Combine(Path.GetTempPath(), "widbar-gacha-calendar-startup.log");
 	}
 }
