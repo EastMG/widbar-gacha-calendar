@@ -7,6 +7,10 @@
 //
 // 只读引用 core，不复制其抓取/解析逻辑（仓库硬边界）。
 //
+// color：core 的 SOURCES 里每条来源都带 `color`（来源注册表 `SOURCE_COLORS` 下发，如 genshin `#3FA9A0`），
+// 它是"日程视图：颜色 = 游戏"的唯一真源。这里一并抽进 catalog；拿不到就写空串，
+// 由 Core/视图层按游戏名哈希落到固定色盘（见 ScheduleBuilder 的 PALETTE）。
+//
 // 用法：
 //   node tools/gen-catalog.mjs           # 生成/更新 data/catalog.json
 //   node tools/gen-catalog.mjs --check   # CI 门禁：catalog 与 core 不一致时退出码 1
@@ -101,10 +105,23 @@ function sourceFacts(engine, coreText) {
 	return { mode: "bundle-regex", map: null, text: coreText };
 }
 
+// 颜色只认 `#RRGGBB`；其它（缺失 / null / 非颜色字符串）一律空串，交给下游哈希色盘。
+function normalizeColor(value) {
+	const text = typeof value === "string" ? value.trim() : "";
+	return /^#[0-9A-Fa-f]{6}$/.test(text) ? text : "";
+}
+
+const escapeRegExp = (text) => String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 function pickFacts(facts, id) {
 	if (facts.map) {
 		const src = facts.map.get(id);
-		return { defaultHidden: !!src?.defaultHidden, tz: src?.tz ?? "", icon: src?.icon ?? "" };
+		return {
+			defaultHidden: !!src?.defaultHidden,
+			tz: src?.tz ?? "",
+			icon: src?.icon ?? "",
+			color: normalizeColor(src?.color),
+		};
 	}
 	// 退化路径：在 bundle 里以 id 为锚点，取邻近一段做正则匹配
 	const text = facts.text ?? "";
@@ -113,7 +130,11 @@ function pickFacts(facts, id) {
 	const defaultHidden = /defaultHidden\s*:\s*(!0|true)/.test(block);
 	const tz = /tz\s*:\s*"([^"]+)"/.exec(block)?.[1] ?? "";
 	const icon = /icon\s*:\s*"([^"]+)"/.exec(block)?.[1] ?? "";
-	return { defaultHidden, tz, icon };
+	// 颜色可能写在来源条目里，也可能集中在一张 `{ id: "#RRGGBB" }` 表里（core 目前是后者）。
+	const inlineColor = /color\s*:\s*"(#[0-9A-Fa-f]{6})"/.exec(block)?.[1] ?? "";
+	const tableColor =
+		new RegExp(`["']?${escapeRegExp(id)}["']?\\s*:\\s*"(#[0-9A-Fa-f]{6})"`).exec(text)?.[1] ?? "";
+	return { defaultHidden, tz, icon, color: normalizeColor(inlineColor || tableColor) };
 }
 
 async function main() {
@@ -143,6 +164,7 @@ async function main() {
 			id: g.id,
 			name: g.name ?? "",
 			icon: g.icon || f.icon || "",
+			color: f.color || "",
 			order: index,
 			defaultHidden: f.defaultHidden,
 			tz: tzToMinutes(f.tz, at),
@@ -158,6 +180,10 @@ async function main() {
 
 	const noIcon = games.filter((g) => !g.icon).map((g) => g.id);
 	if (noIcon.length > 0) console.warn(`⚠️ 以下条目拿不到 icon：${noIcon.join(", ")}`);
+
+	const noColor = games.filter((g) => !g.color).map((g) => g.id);
+	if (noColor.length > 0)
+		console.warn(`⚠️ 以下条目拿不到 color（运行期按游戏名哈希取色盘）：${noColor.join(", ")}`);
 
 	const catalog = {
 		schemaVersion: 1,
@@ -203,7 +229,8 @@ async function main() {
 	fs.writeFileSync(OUT_FILE, stableText, "utf8");
 	console.log(
 		`✓ 已写入 ${path.relative(REPO, OUT_FILE)}：${games.length} 款，core ${catalog.coreVersion}，` +
-			`默认隐藏 ${hiddenIds.length} 款（${hiddenIds.join("、")}），icon 缺失 ${noIcon.length} 款，来源 ${facts.mode}`,
+			`默认隐藏 ${hiddenIds.length} 款（${hiddenIds.join("、")}），icon 缺失 ${noIcon.length} 款，` +
+			`color 缺失 ${noColor.length} 款，来源 ${facts.mode}`,
 	);
 }
 

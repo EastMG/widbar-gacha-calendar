@@ -25,6 +25,8 @@ public sealed class RowVm : INotifyPropertyChanged
 	private string _eventDateTip = "";
 	private bool _showGacha = true;
 	private bool _showEvent = true;
+	private ScheduleItem? _gacha;
+	private ScheduleItem? _event;
 
 	public RowVm(CatalogEntry game, GameRecord? rec)
 	{
@@ -61,6 +63,15 @@ public sealed class RowVm : INotifyPropertyChanged
 	public bool ShowGacha { get => _showGacha; internal set => Set(ref _showGacha, value); }
 
 	public bool ShowEvent { get => _showEvent; internal set => Set(ref _showEvent, value); }
+
+	/// <summary>
+	/// 本行「卡池」这一格的日程条目（颜色 / 状态图案 / 紧迫度文字 / 14 天迷你条都从这里取）；
+	/// <c>null</c> = 这一侧没有内容。由 <see cref="WidgetViewModel"/> 在重建快照后挂上。
+	/// </summary>
+	public ScheduleItem? Gacha { get => _gacha; internal set => Set(ref _gacha, value); }
+
+	/// <summary>本行「活动」这一格的日程条目；<c>null</c> = 这一侧没有内容。</summary>
+	public ScheduleItem? Event { get => _event; internal set => Set(ref _event, value); }
 
 	public void Refresh(DateTime now)
 	{

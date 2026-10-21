@@ -32,6 +32,7 @@ public sealed class WidgetViewModel : INotifyPropertyChanged
 	private bool _hasError;
 	private bool _showGacha = true;
 	private bool _showEvent = true;
+	private ScheduleSnapshot? _schedule;
 
 	public ObservableCollection<RowVm> Rows { get; } = new();
 
@@ -91,6 +92,26 @@ public sealed class WidgetViewModel : INotifyPropertyChanged
 
 	public bool HasNoChips => Chips.Count == 0;
 
+	// ---------------------------------------------------------------- 日程视图（日程条目 / 近期 / 下一个截止）
+
+	/// <summary>
+	/// 最新一次构建的日程快照（颜色=游戏 / 图案=状态 / 文字=紧迫度）。
+	/// <c>null</c> = 还没有数据（未 Apply 或载入失败）。
+	/// </summary>
+	public ScheduleSnapshot? Schedule { get => _schedule; private set => Set(ref _schedule, value); }
+
+	/// <summary>跨游戏「近期」：只取在期，按结束时间升序，最多 6 条。</summary>
+	public IReadOnlyList<ScheduleItem> Recent => _schedule?.Recent ?? Array.Empty<ScheduleItem>();
+
+	/// <summary>下一个截止（在期里结束时间最早的一条）。</summary>
+	public ScheduleItem? NextUp => _schedule?.NextUp;
+
+	/// <summary>NextUp 之后最近的 2 条（不含 NextUp）。</summary>
+	public IReadOnlyList<ScheduleItem> NextTwo => _schedule?.NextTwo ?? Array.Empty<ScheduleItem>();
+
+	/// <summary>总览一行：<c>"24 小时内 N 条 · 7 天内 M 条"</c>。</summary>
+	public string GlanceText => _schedule?.GlanceText ?? "";
+
 	public event PropertyChangedEventHandler? PropertyChanged;
 
 	/// <summary>4 参重载：调用方未区分数据来源时按"联网新数据"处理。</summary>
@@ -118,7 +139,7 @@ public sealed class WidgetViewModel : INotifyPropertyChanged
 		ShowEvent = _settings.ShowEvent;
 
 		Rows.Clear();
-		foreach (var entry in BuildOrderedVisible(catalog, _settings))
+		foreach (var entry in VisibleOrdered(catalog, _settings))
 		{
 			Rows.Add(new RowVm(entry, feed.Record(entry.Id))
 			{
@@ -176,7 +197,7 @@ public sealed class WidgetViewModel : INotifyPropertyChanged
 		Apply(_feed, settings, _catalog, _lastNow, _status);
 	}
 
-	/// <summary>分钟级刷新：行文案 + chips 剩余时间。force 用于 Apply 后立刻算一遍。</summary>
+	/// <summary>分钟级刷新：行文案 + chips 剩余时间 + 日程紧迫度。force 用于 Apply 后立刻算一遍。</summary>
 	public void Tick(DateTime now, bool force = false)
 	{
 		if (_feed == null) return;
@@ -185,6 +206,7 @@ public sealed class WidgetViewModel : INotifyPropertyChanged
 		_lastNow = now;
 		foreach (var row in Rows) row.Refresh(now);
 		RebuildChips(now);
+		RebuildSchedule(now);
 	}
 
 	public void ShowError(string message)
@@ -192,6 +214,7 @@ public sealed class WidgetViewModel : INotifyPropertyChanged
 		_feed = null;
 		Rows.Clear();
 		Chips.Clear();
+		SetSchedule(null);
 		HasError = true;
 		ErrorText = message;
 		StatusText = "载入失败";
@@ -211,8 +234,12 @@ public sealed class WidgetViewModel : INotifyPropertyChanged
 	/// 可见性三态（与 core/docs 口径一致）：
 	/// removed/hidden 含 id → 隐藏；defaultHidden 且不在 shown → 隐藏；
 	/// 顺序：settings.order 优先，其余按 catalog.order 补后。
+	/// <para>
+	/// <c>internal</c> 是为了让 <see cref="ScheduleBuilder"/> 与面板表格共用同一套规则 ——
+	/// "日程列表"和"表格"必须逐行一致，两边各写一套迟早会飘。
+	/// </para>
 	/// </summary>
-	private static List<CatalogEntry> BuildOrderedVisible(GameCatalog catalog, WidgetSettings settings)
+	internal static IEnumerable<CatalogEntry> VisibleOrdered(GameCatalog catalog, WidgetSettings settings)
 	{
 		var hidden = new HashSet<string>(settings.Hidden, StringComparer.Ordinal);
 		var shown = new HashSet<string>(settings.Shown, StringComparer.Ordinal);
@@ -349,6 +376,71 @@ public sealed class WidgetViewModel : INotifyPropertyChanged
 	{
 		if (name.Length <= 9) return name;
 		return name[..8] + "…";
+	}
+
+	// ---------------------------------------------------------------- 日程快照
+
+	/// <summary>
+	/// 重建日程快照（Apply 末尾经 Tick(force) 触发，之后每分钟一次以刷新紧迫度）。
+	/// <para>
+	/// 通知纪律：值没变就不换对象、不发通知（否则每分钟 5 个属性全刷一遍，外壳白重绘）；
+	/// 值变了必须真的发 PropertyChanged —— 0.1.15 修过一次"直接改字段不发通知"
+	/// （外壳的示例/缓存标记因此不消失），这里不要再踩。
+	/// </para>
+	/// </summary>
+	private void RebuildSchedule(DateTime now)
+	{
+		if (_feed == null || _catalog == null)
+		{
+			SetSchedule(null);
+			return;
+		}
+
+		var next = ScheduleBuilder.Build(_feed, _catalog, _settings, now, recentLimit: 5);
+		if (!ScheduleSnapshot.SameValue(_schedule, next))
+		{
+			Schedule = next;
+			Raise(nameof(Recent));
+			Raise(nameof(NextUp));
+			Raise(nameof(NextTwo));
+			Raise(nameof(GlanceText));
+		}
+
+		// 快照没变也要重挂：Apply 会把 Rows 整批重建（新 RowVm 的 Gacha/Event 还是 null）。
+		MountScheduleToRows();
+	}
+
+	/// <summary>清空日程（载入失败 / 无数据）：对象变了才发通知。</summary>
+	private void SetSchedule(ScheduleSnapshot? snapshot)
+	{
+		if (ReferenceEquals(_schedule, snapshot)) return;
+		Schedule = snapshot;
+		Raise(nameof(Recent));
+		Raise(nameof(NextUp));
+		Raise(nameof(NextTwo));
+		Raise(nameof(GlanceText));
+		MountScheduleToRows();
+	}
+
+	/// <summary>
+	/// 把快照里的条目按 <c>(GameId, "gacha"/"event")</c> 挂到每一行的 <see cref="RowVm.Gacha"/> /
+	/// <see cref="RowVm.Event"/> 上，供表格每格的迷你条与文字直接绑定。
+	/// </summary>
+	private void MountScheduleToRows()
+	{
+		Dictionary<string, ScheduleItem>? byKey = null;
+		if (_schedule != null)
+		{
+			byKey = new Dictionary<string, ScheduleItem>(StringComparer.Ordinal);
+			foreach (var item in _schedule.Items)
+				byKey.TryAdd(item.GameId + ":" + item.Side, item);
+		}
+
+		foreach (var row in Rows)
+		{
+			row.Gacha = byKey != null && byKey.TryGetValue(row.GameId + ":gacha", out var gacha) ? gacha : null;
+			row.Event = byKey != null && byKey.TryGetValue(row.GameId + ":event", out var @event) ? @event : null;
+		}
 	}
 
 	private bool Set<T>(ref T field, T value, [CallerMemberName] string? name = null)

@@ -1,4 +1,4 @@
-﻿# widbar-gacha-calendar
+# widbar-gacha-calendar
 
 [![build](https://github.com/EastMG/widbar-gacha-calendar/actions/workflows/build.yml/badge.svg)](https://github.com/EastMG/widbar-gacha-calendar/actions/workflows/build.yml)
 [![license](https://img.shields.io/github/license/EastMG/widbar-gacha-calendar.svg)](./LICENSE)
@@ -26,9 +26,9 @@
 |---|---|
 | 数据层 `GachaCalendar.Core`（feed / 缓存 / 目录 / 可见性 / 行文案 / 失败三态） | ✅ 268 条断言 |
 | WidBar 插件契约接入（`com.widbar.widget` AppExtension / `plugin.json` / 单项目 MSIX） | ✅ 构建 + 注册 + 被发现 |
-| 任务栏预览条（1–3 条最近结束 + 短倒计时） | ✅ 已实拍（`docs/images/preview.png`） |
-| 展开面板（23 款可见 / 六列 / 失败三态 / 悬停明细） | ✅ 已实拍（`docs/images/flyout.png`） |
-| 设置页（显隐 / 排序 / 预览条数 / 刷新间隔 / 数据源 / 数据检查） | ✅ 已实拍（`docs/images/settings.png`） |
+| 任务栏预览条（1–3 条最近结束 + 短倒计时 + 游戏色点） | ✅ 已实拍（`docs/images/design-preview.png`） |
+| 展开面板（近期 / 下一个截止 / 14 天迷你条游戏表 / 图例） | ✅ 已实拍（`docs/images/design-flyout.png`） |
+| 设置页（Fluent 卡片式：显隐 / 排序 / 预览条数 / 刷新 / 数据源 / 数据检查） | ✅ 已实拍（`docs/images/design-settings.png`） |
 | 数据源：静态快照 JSON（`gacha-calendar-app` CI，每 6h） | ✅ 已抓到真实数据（28 款，缓存落盘） |
 | 宿主联调（WidBar 1.2.8 拉起进程并连上管道） | ✅ 签名安装后跑通（见 docs/03 §7） |
 | 商店图标素材（44 / 48 / 50 / 71 / 150 / 310 / 620） | ✅ `tools/make-icons.py` 生成 |
@@ -47,13 +47,27 @@
 
 ## 界面
 
+视觉对齐 DSH 版 `newPanel` 的日程视图语言（**颜色=游戏 / 图案=状态 / 文字=紧迫度**）+
+WinUI 3 Fluent 规范（主题资源、8px 网格、卡片、克制的分隔线）：
+
 | 任务栏预览条 | 展开面板 |
 |---|---|
-| ![任务栏预览条](docs/images/preview.png) | ![展开面板](docs/images/flyout.png) |
+| ![任务栏预览条](docs/images/design-preview.png) | ![展开面板](docs/images/design-flyout.png) |
 
-![设置页](docs/images/settings.png)
+![设置页](docs/images/design-settings.png)
 
-> 以上为 Windows 11（150% 缩放）实机截图，数据为真实抓取。
+> 以上由 `GachaWidget.exe --ui-preview=preview|flyout|settings` 按真实尺寸渲染后截图
+> （深色主题、150% 缩放、内置示例数据）；WidBar 里会自动跟随系统深浅色。
+
+### 设计冒烟（不装 WidBar 也能看效果）
+
+```powershell
+# 构建后按真实尺寸打开对应界面，直接截窗口即可
+.\src\GachaWidget\bin\x64\Release\net10.0-windows10.0.19041.0\win-x64\GachaWidget.exe --ui-preview=flyout
+```
+
+- `preview`（372dip 预览条）、`flyout`（830×580 面板）、`settings`（900×940 设置页）三种；
+- 这是开发期 harness：不连宿主、不发网络请求，用内置示例数据渲染。
 
 
 ## 数据从哪来

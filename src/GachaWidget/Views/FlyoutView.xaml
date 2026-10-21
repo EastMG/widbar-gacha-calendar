@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <UserControl
     x:Class="GachaWidget.Views.FlyoutView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -12,201 +12,385 @@
 
     <UserControl.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibility" />
-        <conv:StringEqualsToVisibilityConverter x:Key="KindEquals" />
+        <conv:FirstCharConverter x:Key="FirstChar" />
         <conv:StringNotEmptyToVisibilityConverter x:Key="NotEmpty" />
+        <conv:NullToVisibilityConverter x:Key="NotNull" />
+        <conv:UrgencyToBrushConverter x:Key="UrgencyBrush" />
+        <conv:HexToBrushConverter x:Key="HexBrush" />
+        <conv:GameNameToBrushConverter x:Key="GameBrush" />
+        <conv:SideLabelConverter x:Key="SideLabel" />
+        <conv:SideToBackgroundConverter x:Key="SideBg" />
+        <conv:SideToForegroundConverter x:Key="SideFg" />
     </UserControl.Resources>
 
-    <!-- 背景/材质由 WidBar 提供：这里根透明，不画底板 -->
-    <Grid Background="Transparent" Padding="14,12,14,10" RowSpacing="8">
+    <!-- 背景/材质由 WidBar 提供：根透明，不画底板 -->
+    <Grid Padding="16,14,16,10" RowSpacing="10">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- 顶部状态条 -->
-        <Grid Grid.Row="0" ColumnSpacing="8">
+        <!-- ① 头部：左 = 总览（24h / 7d），右 = 日期胶囊 + 刷新（给设置齿轮留 46dip） -->
+        <Grid Grid.Row="0" ColumnSpacing="10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel Spacing="2" VerticalAlignment="Center">
-                <StackPanel Orientation="Horizontal" Spacing="8">
+
+            <TextBlock
+                VerticalAlignment="Center"
+                FontSize="12"
+                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                Text="{x:Bind Vm.GlanceText, Mode=OneWay}"
+                TextTrimming="CharacterEllipsis" />
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center" Margin="0,0,46,0">
+                <Border
+                    Padding="10,3"
+                    Background="{ThemeResource ControlFillColorDefaultBrush}"
+                    CornerRadius="999">
                     <TextBlock
-                        FontSize="16"
-                        FontWeight="SemiBold"
-                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                        Text="二游日历" />
-                    <TextBlock
-                        VerticalAlignment="Center"
-                        FontSize="12"
-                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                        Text="{x:Bind Vm.HeaderCount, Mode=OneWay}" />
+                        x:Name="DateCapsuleText"
+                        FontSize="11"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </Border>
+                <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                    <ProgressRing
+                        x:Name="BusyRing"
+                        Width="14"
+                        Height="14"
+                        IsActive="False"
+                        Visibility="Collapsed" />
+                    <Button
+                        x:Name="RefreshButton"
+                        Click="OnRefreshClick"
+                        ToolTipService.ToolTip="立即刷新（数据源每 6 小时更新一次）">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon FontSize="13" Glyph="&#xE72C;" />
+                            <TextBlock FontSize="12" Text="刷新" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
-                <TextBlock
-                    FontSize="12"
-                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                    Text="{x:Bind Vm.StatusText, Mode=OneWay}"
-                    ToolTipService.ToolTip="{x:Bind Vm.StatusTip, Mode=OneWay}" />
-            </StackPanel>
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center" Margin="0,0,46,0">
-                <ProgressRing
-                    x:Name="BusyRing"
-                    Width="16"
-                    Height="16"
-                    IsActive="False"
-                    Visibility="Collapsed" />
-                <Button
-                    x:Name="RefreshButton"
-                    Click="OnRefreshClick"
-                    ToolTipService.ToolTip="立即刷新（数据源每 6 小时更新一次）">
-                    <StackPanel Orientation="Horizontal" Spacing="6">
-                        <FontIcon FontSize="14" Glyph="&#xE72C;" />
-                        <TextBlock Text="刷新" />
-                    </StackPanel>
-                </Button>
             </StackPanel>
         </Grid>
 
-        <!-- 列头 -->
-        <Grid Grid.Row="1" Padding="4,0" ColumnSpacing="6">
+        <!-- ② 近期（按紧迫度）+ 下一个截止卡 -->
+        <Grid Grid.Row="1" ColumnSpacing="12" MaxHeight="190">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="150" />
-                <ColumnDefinition Width="175" />
-                <ColumnDefinition Width="125" />
-                <ColumnDefinition Width="175" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="1.6*" />
+                <ColumnDefinition Width="1*" />
             </Grid.ColumnDefinitions>
-            <TextBlock FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="游戏" />
-            <TextBlock Grid.Column="1" FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="当期卡池" />
-            <TextBlock Grid.Column="2" FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="卡池起止" />
-            <TextBlock Grid.Column="3" FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="当期活动" />
-            <TextBlock Grid.Column="4" FontSize="11" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="活动起止" />
-        </Grid>
 
-        <!-- 行列表 -->
-        <Grid Grid.Row="2">
-            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled">
-                <ItemsControl ItemsSource="{x:Bind Vm.Rows, Mode=OneWay}">
+            <StackPanel Grid.Column="0" Spacing="2">
+                <TextBlock
+                    Margin="2,0,0,4"
+                    FontSize="11"
+                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                    Text="近期 · 按紧迫度" />
+                <ItemsControl ItemsSource="{x:Bind Vm.Recent, Mode=OneWay}">
                     <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="vm:RowVm">
-                            <Border BorderThickness="0,0,0,1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Padding="4,7">
-                                <Grid ColumnSpacing="6">
+                        <DataTemplate x:DataType="vm:ScheduleItem">
+                            <Border Padding="4,5" CornerRadius="6" ToolTipService.ToolTip="{x:Bind RawTip}">
+                                <Grid ColumnSpacing="8">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="175" />
-                                        <ColumnDefinition Width="125" />
-                                        <ColumnDefinition Width="175" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
 
-                                    <!-- 游戏名 + 状态 badge -->
-                                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                        <controls:GameIcon Glyph="{x:Bind Name}" IconUrl="{x:Bind IconUrl}" />
-                                        <StackPanel Spacing="2" VerticalAlignment="Center">
-                                            <TextBlock
-                                                FontSize="13"
-                                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                                MaxLines="1"
-                                                Text="{x:Bind Name}"
-                                                TextTrimming="CharacterEllipsis"
-                                                ToolTipService.ToolTip="{x:Bind Name}" />
-                                            <Grid>
-                                                <!-- 报错 badge（红） -->
-                                                <Border
-                                                    Padding="5,1"
-                                                    Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}"
-                                                    CornerRadius="4"
-                                                    Visibility="{x:Bind BadgeKind, Converter={StaticResource KindEquals}, ConverterParameter=err, Mode=OneWay}">
-                                                    <TextBlock
-                                                        FontSize="10"
-                                                        Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                                                        Text="{x:Bind BadgeText, Mode=OneWay}" />
-                                                </Border>
-                                                <!-- 未公布 / 沿用旧数据（中性） -->
-                                                <Border
-                                                    Padding="5,1"
-                                                    Background="{ThemeResource ControlFillColorSecondaryBrush}"
-                                                    CornerRadius="4">
-                                                    <Border.Visibility>
-                                                        <Binding
-                                                            Converter="{StaticResource KindEquals}"
-                                                            ConverterParameter="warn"
-                                                            Mode="OneWay"
-                                                            Path="BadgeKind" />
-                                                    </Border.Visibility>
-                                                    <TextBlock
-                                                        FontSize="10"
-                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                        Text="{x:Bind BadgeText, Mode=OneWay}" />
-                                                </Border>
-                                                <Border
-                                                    Padding="5,1"
-                                                    Background="{ThemeResource ControlFillColorSecondaryBrush}"
-                                                    CornerRadius="4">
-                                                    <Border.Visibility>
-                                                        <Binding
-                                                            Converter="{StaticResource KindEquals}"
-                                                            ConverterParameter="stale"
-                                                            Mode="OneWay"
-                                                            Path="BadgeKind" />
-                                                    </Border.Visibility>
-                                                    <TextBlock
-                                                        FontSize="10"
-                                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                                        Text="{x:Bind BadgeText, Mode=OneWay}" />
-                                                </Border>
-                                            </Grid>
-                                        </StackPanel>
-                                    </StackPanel>
+                                    <controls:GameIcon
+                                        Width="22"
+                                        Height="22"
+                                        VerticalAlignment="Center"
+                                        Glyph="{x:Bind GameName, Converter={StaticResource FirstChar}}"
+                                        IconUrl="{x:Bind IconUrl}" />
 
-                                    <!-- 卡池名（隐藏时收起整列内容） -->
-                                    <TextBlock
+                                    <Border
                                         Grid.Column="1"
+                                        Width="7"
+                                        Height="7"
                                         VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                        MaxLines="2"
-                                        Text="{x:Bind GachaText, Mode=OneWay}"
-                                        TextTrimming="CharacterEllipsis"
-                                        TextWrapping="Wrap"
-                                        ToolTipService.ToolTip="{x:Bind GachaTip, Mode=OneWay}"
-                                        Visibility="{x:Bind ShowGacha, Converter={StaticResource BoolToVisibility}, Mode=OneWay}" />
+                                        Background="{x:Bind Color, Converter={StaticResource HexBrush}}"
+                                        CornerRadius="3.5" />
 
-                                    <TextBlock
+                                    <Border
                                         Grid.Column="2"
+                                        Padding="5,0"
                                         VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        MaxLines="2"
-                                        Text="{x:Bind GachaDateText, Mode=OneWay}"
-                                        TextWrapping="Wrap"
-                                        ToolTipService.ToolTip="{x:Bind GachaDateTip, Mode=OneWay}"
-                                        Visibility="{x:Bind ShowGacha, Converter={StaticResource BoolToVisibility}, Mode=OneWay}" />
+                                        Background="{x:Bind Side, Converter={StaticResource SideBg}}"
+                                        CornerRadius="999">
+                                        <TextBlock
+                                            FontSize="10"
+                                            Foreground="{x:Bind Side, Converter={StaticResource SideFg}}"
+                                            Text="{x:Bind IsGacha, Converter={StaticResource SideLabel}}" />
+                                    </Border>
 
                                     <TextBlock
                                         Grid.Column="3"
                                         VerticalAlignment="Center"
-                                        FontSize="12"
+                                        FontSize="12.5"
+                                        FontWeight="SemiBold"
                                         Foreground="{ThemeResource TextFillColorPrimaryBrush}"
-                                        MaxLines="2"
-                                        Text="{x:Bind EventText, Mode=OneWay}"
-                                        TextTrimming="CharacterEllipsis"
-                                        TextWrapping="Wrap"
-                                        ToolTipService.ToolTip="{x:Bind EventTip, Mode=OneWay}"
-                                        Visibility="{x:Bind ShowEvent, Converter={StaticResource BoolToVisibility}, Mode=OneWay}" />
+                                        Text="{x:Bind Title}"
+                                        TextTrimming="CharacterEllipsis" />
 
                                     <TextBlock
                                         Grid.Column="4"
                                         VerticalAlignment="Center"
                                         FontSize="12"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                        MaxLines="2"
-                                        Text="{x:Bind EventDateText, Mode=OneWay}"
-                                        TextWrapping="Wrap"
-                                        ToolTipService.ToolTip="{x:Bind EventDateTip, Mode=OneWay}"
-                                        Visibility="{x:Bind ShowEvent, Converter={StaticResource BoolToVisibility}, Mode=OneWay}" />
+                                        FontWeight="SemiBold"
+                                        Foreground="{x:Bind UrgencyLevel, Converter={StaticResource UrgencyBrush}}"
+                                        Text="{x:Bind UrgencyText}" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- 下一个截止：大号剩余天数 + 下面两件 -->
+            <Border
+                Grid.Column="1"
+                Padding="14,12"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="14"
+                Visibility="{x:Bind Vm.NextUp, Mode=OneWay, Converter={StaticResource NotNull}}">
+                <StackPanel Spacing="8">
+                    <!-- 顶部细色条：把"这是哪款游戏"带进卡片，和表格里的迷你条同色 -->
+                    <Border
+                        Height="3"
+                        Background="{x:Bind Vm.NextUp.Color, Mode=OneWay, Converter={StaticResource HexBrush}}"
+                        CornerRadius="2" />
+                    <StackPanel Spacing="8">
+                        <Grid ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <controls:GameIcon
+                                Width="34"
+                                Height="34"
+                                VerticalAlignment="Center"
+                                Glyph="{x:Bind Vm.NextUp.GameName, Mode=OneWay, Converter={StaticResource FirstChar}}"
+                                IconUrl="{x:Bind Vm.NextUp.IconUrl, Mode=OneWay}" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock
+                                    FontSize="13"
+                                    FontWeight="SemiBold"
+                                    Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                    Text="{x:Bind Vm.NextUp.GameName, Mode=OneWay}"
+                                    TextTrimming="CharacterEllipsis" />
+                                <TextBlock
+                                    FontSize="11"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind Vm.NextUp.Title, Mode=OneWay}"
+                                    TextTrimming="CharacterEllipsis" />
+                            </StackPanel>
+                        </Grid>
+
+                        <StackPanel Spacing="2">
+                            <TextBlock
+                                FontSize="20"
+                                FontWeight="SemiBold"
+                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                Text="{x:Bind Vm.NextUp.UrgencyText, Mode=OneWay}" />
+                            <TextBlock
+                                FontSize="10.5"
+                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                Text="{x:Bind Vm.NextUp.DatesText, Mode=OneWay}"
+                                TextTrimming="CharacterEllipsis" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Spacing="4" Margin="0,2,0,0">
+                        <ItemsControl ItemsSource="{x:Bind Vm.NextTwo, Mode=OneWay}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="vm:ScheduleItem">
+                                    <Grid Padding="0,2" ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Border
+                                            Width="6"
+                                            Height="6"
+                                            VerticalAlignment="Center"
+                                            Background="{x:Bind Color, Converter={StaticResource HexBrush}}"
+                                            CornerRadius="3" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            FontSize="11"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{x:Bind GameName}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Grid.Column="2"
+                                            FontSize="11"
+                                            Foreground="{x:Bind UrgencyLevel, Converter={StaticResource UrgencyBrush}}"
+                                            Text="{x:Bind UrgencyText}" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- ③ 表头 + 14 天刻度（两列共用同一根轴） -->
+        <StackPanel Grid.Row="2" Spacing="2">
+            <Grid ColumnSpacing="12" Padding="6,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="158" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock FontSize="10.5" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="游戏" />
+                <TextBlock
+                    Grid.Column="1"
+                    Padding="9,0,0,0"
+                    FontSize="10.5"
+                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                    Text="◆ 卡池" />
+                <TextBlock
+                    Grid.Column="2"
+                    Padding="9,0,0,0"
+                    FontSize="10.5"
+                    Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                    Text="⚑ 活动" />
+            </Grid>
+            <Grid ColumnSpacing="12" Padding="6,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="158" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid x:Name="RulerGacha" Grid.Column="1" />
+                <Grid x:Name="RulerEvent" Grid.Column="2" />
+            </Grid>
+            <Border Height="1" Margin="0,2,0,0" Background="{ThemeResource DividerStrokeColorDefaultBrush}" />
+        </StackPanel>
+
+        <!-- ④ 游戏表：每格 = 名称 / 档期+紧迫度 / 14 天迷你条 -->
+        <Grid Grid.Row="3">
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled">
+                <ItemsControl ItemsSource="{x:Bind Vm.Rows, Mode=OneWay}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="vm:RowVm">
+                            <Border
+                                Padding="6,9,6,10"
+                                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                                BorderThickness="0,0,0,1">
+                                <Grid ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="158" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- 游戏名 -->
+                                    <Grid ColumnSpacing="10" VerticalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <controls:GameIcon
+                                            Width="34"
+                                            Height="34"
+                                            VerticalAlignment="Center"
+                                            Glyph="{x:Bind Name, Converter={StaticResource FirstChar}}"
+                                            IconUrl="{x:Bind IconUrl}" />
+                                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+                                            <TextBlock
+                                                FontSize="12.5"
+                                                FontWeight="SemiBold"
+                                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                                MaxLines="2"
+                                                Text="{x:Bind Name}"
+                                                TextTrimming="CharacterEllipsis"
+                                                TextWrapping="Wrap"
+                                                ToolTipService.ToolTip="{x:Bind Name}" />
+                                            <TextBlock
+                                                FontSize="10"
+                                                Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                                MaxLines="1"
+                                                Text="{x:Bind BadgeText, Mode=OneWay}"
+                                                TextTrimming="CharacterEllipsis"
+                                                Visibility="{x:Bind HasBadge, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- 卡池 -->
+                                    <Grid Grid.Column="1">
+                                        <StackPanel Spacing="1" Visibility="{x:Bind Gacha, Mode=OneWay, Converter={StaticResource NotNull}}">
+                                            <TextBlock
+                                                FontSize="12"
+                                                FontWeight="SemiBold"
+                                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                                MaxLines="2"
+                                                Text="{x:Bind Gacha.Title, Mode=OneWay}"
+                                                TextTrimming="CharacterEllipsis"
+                                                TextWrapping="Wrap"
+                                                ToolTipService.ToolTip="{x:Bind Gacha.RawTip, Mode=OneWay}" />
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <TextBlock
+                                                    FontSize="11"
+                                                    Foreground="{x:Bind Gacha.UrgencyLevel, Mode=OneWay, Converter={StaticResource UrgencyBrush}}"
+                                                    Text="{x:Bind Gacha.UrgencyText, Mode=OneWay}" />
+                                                <TextBlock
+                                                    FontSize="11"
+                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                    Text="{x:Bind Gacha.DatesText, Mode=OneWay}"
+                                                    TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                            <controls:ScheduleBar Item="{x:Bind Gacha, Mode=OneWay}" Height="10" Margin="0,3,0,0" />
+                                        </StackPanel>
+                                        <TextBlock
+                                            FontSize="11"
+                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                            Text="该来源无数据"
+                                            Visibility="{x:Bind Gacha, Mode=OneWay, Converter={StaticResource NotNull}, ConverterParameter=invert}" />
+                                    </Grid>
+
+                                    <!-- 活动 -->
+                                    <Grid Grid.Column="2">
+                                        <StackPanel Spacing="1" Visibility="{x:Bind Event, Mode=OneWay, Converter={StaticResource NotNull}}">
+                                            <TextBlock
+                                                FontSize="12"
+                                                FontWeight="SemiBold"
+                                                Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                                                MaxLines="2"
+                                                Text="{x:Bind Event.Title, Mode=OneWay}"
+                                                TextTrimming="CharacterEllipsis"
+                                                TextWrapping="Wrap"
+                                                ToolTipService.ToolTip="{x:Bind Event.RawTip, Mode=OneWay}" />
+                                            <StackPanel Orientation="Horizontal" Spacing="6">
+                                                <TextBlock
+                                                    FontSize="11"
+                                                    Foreground="{x:Bind Event.UrgencyLevel, Mode=OneWay, Converter={StaticResource UrgencyBrush}}"
+                                                    Text="{x:Bind Event.UrgencyText, Mode=OneWay}" />
+                                                <TextBlock
+                                                    FontSize="11"
+                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                    Text="{x:Bind Event.DatesText, Mode=OneWay}"
+                                                    TextTrimming="CharacterEllipsis" />
+                                            </StackPanel>
+                                            <controls:ScheduleBar Item="{x:Bind Event, Mode=OneWay}" Height="10" Margin="0,3,0,0" />
+                                        </StackPanel>
+                                        <TextBlock
+                                            FontSize="11"
+                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                            Text="该来源无数据"
+                                            Visibility="{x:Bind Event, Mode=OneWay, Converter={StaticResource NotNull}, ConverterParameter=invert}" />
+                                    </Grid>
                                 </Grid>
                             </Border>
                         </DataTemplate>
@@ -217,8 +401,8 @@
             <!-- 错误态 -->
             <StackPanel
                 x:Name="ErrorPanel"
-                VerticalAlignment="Center"
                 HorizontalAlignment="Center"
+                VerticalAlignment="Center"
                 Spacing="6"
                 Visibility="Collapsed">
                 <TextBlock
@@ -237,22 +421,44 @@
             </StackPanel>
         </Grid>
 
-        <!-- 底部：数据时间 + 说明 -->
-        <Grid Grid.Row="3" ColumnSpacing="8">
+        <!-- ⑤ 底栏：图例 + 抓取状态 + 上次更新 -->
+        <Grid Grid.Row="4" ColumnSpacing="10">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBlock
-                FontSize="11"
-                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                Text="{x:Bind Vm.UpdatedText, Mode=OneWay}" />
+
+            <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <Border Width="10" Height="6" Background="{ThemeResource TextFillColorSecondaryBrush}" CornerRadius="2" VerticalAlignment="Center" />
+                    <TextBlock FontSize="10" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="实心=在期" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <Border Width="10" Height="6" Background="{ThemeResource TextFillColorTertiaryBrush}" CornerRadius="2" Opacity="0.55" VerticalAlignment="Center" />
+                    <TextBlock FontSize="10" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="半透明=已结束" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <Border Width="10" Height="3" Background="{ThemeResource TextFillColorTertiaryBrush}" CornerRadius="1.5" VerticalAlignment="Center" />
+                    <TextBlock FontSize="10" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="短条=长期" />
+                </StackPanel>
+            </StackPanel>
+
             <TextBlock
                 Grid.Column="1"
-                HorizontalAlignment="Right"
-                FontSize="11"
+                VerticalAlignment="Center"
+                FontSize="10.5"
                 Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                Text="非官方信息聚合 · 数据每 6 小时更新 · 齿轮可设置" />
+                Text="{x:Bind Vm.ScrapeText, Mode=OneWay}"
+                TextTrimming="CharacterEllipsis"
+                ToolTipService.ToolTip="{x:Bind Vm.StatusTip, Mode=OneWay}" />
+
+            <TextBlock
+                Grid.Column="2"
+                VerticalAlignment="Center"
+                FontSize="10.5"
+                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                Text="{x:Bind Vm.UpdatedText, Mode=OneWay}" />
         </Grid>
     </Grid>
 </UserControl>

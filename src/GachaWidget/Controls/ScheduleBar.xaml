@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="GachaWidget.Controls.ScheduleBar"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <!-- 14 天迷你条：所有行共用同一根轴（今天恒为第 3 格） -->
+    <Canvas
+        x:Name="Host"
+        Height="10"
+        SizeChanged="OnSizeChanged" />
+</UserControl>

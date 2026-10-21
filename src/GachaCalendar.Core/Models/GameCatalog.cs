@@ -14,6 +14,12 @@ public sealed class CatalogEntry
 	/// <summary>外链图标 URL；可能为空串（外壳退化为首字/色块）。</summary>
 	public string Icon { get; set; } = "";
 
+	/// <summary>
+	/// 该游戏的代表色（<c>#RRGGBB</c>，来自 core 的来源注册表），日程视图里"颜色 = 游戏"用它。
+	/// 空串表示拿不到 —— 由 <see cref="ViewModels.ScheduleBuilder"/> 按游戏名哈希落到固定色盘。
+	/// </summary>
+	public string Color { get; set; } = "";
+
 	/// <summary>core 默认展示顺序（0 起）。</summary>
 	public int Order { get; set; }
 
@@ -121,6 +127,7 @@ public sealed class GameCatalog
 				Id = raw.Id?.Trim() ?? "",
 				Name = raw.Name ?? "",
 				Icon = raw.Icon ?? "",
+				Color = raw.Color?.Trim() ?? "",
 				Order = raw.Order,
 				DefaultHidden = raw.DefaultHidden,
 				Tz = raw.Tz,

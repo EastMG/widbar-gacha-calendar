@@ -204,3 +204,17 @@ Flyout prewarmed for '648ce38d…'.
    `RequestPreviewRefresh()`。另外 chip 实际宽度约 117dip，按 120dip 预留（3 条 = 372dip），
    名称限宽 62dip —— 按 112dip 估算会把第 3 条裁掉。
 
+### 7.7 设计冒烟 harness（不装 WidBar 也能看界面）
+
+```powershell
+dotnet build src\GachaWidget\GachaWidget.csproj -c Release -p:Platform=x64
+& .\src\GachaWidget\bin\x64\Release\net10.0-windows10.0.19041.0\win-x64\GachaWidget.exe --ui-preview=flyout
+```
+
+- `--ui-preview=preview|flyout|settings`：在独立窗口里按**真实 dip 尺寸**渲染对应界面
+  （preview 372、flyout 830×580、settings 900×940），用内置示例数据，**不连宿主、不发网络请求**。
+- 意义：视觉迭代不必反复签名安装；`docs/images/design-*.png` 就是这么截的
+  （Win32 `PrintWindow(PW_RENDERFULLCONTENT)` + `SetProcessDpiAwarenessContext(-4)` 拿物理像素）。
+- 注意：这是开发期入口，`App.OnLaunched` 里检测到参数就**不进** `base.OnLaunched`，
+  因此不会创建宿主管道；打包进商店的包不受影响（正常启动无该参数）。
+

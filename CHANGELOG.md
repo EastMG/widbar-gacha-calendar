@@ -2,6 +2,23 @@
 
 格式：每条一行，版本号与 `src/GachaWidget/GachaWidget.csproj` 的 `<Version>` 对应。
 
+## v0.1.17（2026-10-21）
+
+- feat: **视觉与信息层级重做**（对齐 DSH `newPanel` 日程视图 + WinUI 3 Fluent）：
+  - 展开面板：头部总览（24h/7d）+ 日期胶囊 + 刷新；「近期 · 按紧迫度」跨游戏列表；
+    「下一个截止」卡（游戏色顶条、大号剩余、下方两件）；**14 天迷你条游戏表**
+    （颜色=游戏、卡池深/活动浅、实心=在期 / 半透明=已结束 / 短条=长期 / 描边=未开始）；
+    中性色图例 + 抓取状态 + 上次更新。
+  - 预览条：游戏色点 + 名称 + 加粗倒计时胶囊（去掉边框噪音），示例/缓存状态改成小圆点。
+  - 设置页：Windows 设置式 Fluent 卡片（分区标题 + 说明 + 卡片行 + ToggleSwitch/NumberBox/ComboBox），
+    深浅色全走 `ThemeResource`。
+- feat: Core 新增 `ScheduleBuilder` / `ScheduleItem` / `ScheduleSnapshot`（五态、紧迫度、Recent/NextUp/NextTwo、
+  14 天窗口），catalog 增加每款游戏代表色（28/28）；VM 暴露 `Schedule/Recent/NextUp/NextTwo/GlanceText`，
+  `RowVm.Gacha/Event` 挂载到表格；单测 276 → **434 断言**。
+- feat: 设计冒烟 harness `--ui-preview=preview|flyout|settings`（按真实尺寸渲染、可截图迭代，
+  不连宿主、不发网络请求），截图进 `docs/images/design-*.png`。
+- docs: README 界面区换成新版截图；docs/06 保持 v1 路线不变。
+
 ## v0.1.16（2026-10-21）
 
 - fix: 预览 chip 宽度收紧到 120dip（游戏名 62dip 截断），3 条正好 372dip；metadata 同步 372。

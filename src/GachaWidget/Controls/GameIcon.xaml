@@ -7,32 +7,34 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <!-- 图标 + 首字兜底：外链失败时不留空洞 -->
-    <Grid Width="32" Height="32">
-        <Border
-            x:Name="FallbackHost"
-            Background="{ThemeResource ControlFillColorSecondaryBrush}"
-            CornerRadius="8">
-            <TextBlock
-                x:Name="FallbackGlyph"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                FontSize="14"
-                FontWeight="SemiBold"
-                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                Text="?" />
-        </Border>
-        <Image
-            x:Name="IconImage"
-            Width="32"
-            Height="32"
-            ImageFailed="OnImageFailed"
-            ImageOpened="OnImageOpened"
-            Visibility="Collapsed" />
-        <Border
-            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-            BorderThickness="1"
-            CornerRadius="8"
-            IsHitTestVisible="False" />
-    </Grid>
+    <!-- 图标 + 首字兜底：外链失败时不留空洞。Viewbox 让调用方任意指定尺寸（22/26/40）。 -->
+    <Viewbox Stretch="Uniform" StretchDirection="Both">
+        <Grid Width="32" Height="32">
+            <Border
+                x:Name="FallbackHost"
+                Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                CornerRadius="8">
+                <TextBlock
+                    x:Name="FallbackGlyph"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="?" />
+            </Border>
+            <Image
+                x:Name="IconImage"
+                Width="32"
+                Height="32"
+                ImageFailed="OnImageFailed"
+                ImageOpened="OnImageOpened"
+                Visibility="Collapsed" />
+            <Border
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                IsHitTestVisible="False" />
+        </Grid>
+    </Viewbox>
 </UserControl>

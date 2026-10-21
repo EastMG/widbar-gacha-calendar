@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using GachaCalendar.Core.Models;
 using GachaCalendar.Core.Services;
 using GachaCalendar.Core.ViewModels;
@@ -39,6 +40,16 @@ internal static class Program
 			TestTick();
 			TestSettings();
 			TestShellApi();
+			TestCatalogColor();
+			TestScheduleItemShape();
+			TestScheduleStates();
+			TestScheduleUrgency();
+			TestScheduleLists();
+			TestScheduleGlance();
+			TestScheduleColors();
+			TestScheduleVisibility();
+			TestScheduleViewModel();
+			TestScheduleRealFeed();
 			await TestFeedClient();
 		}
 		catch (Exception ex)
@@ -128,6 +139,14 @@ internal static class Program
 	private static readonly DateTime Now = new(2026, 10, 21, 19, 8, 0);
 
 	private static GameCatalog MakeCatalog(params (string Id, string Name, bool DefaultHidden)[] games)
+		=> MakeCatalogFull(games.Select(g => (g.Id, g.Name, "", "", g.DefaultHidden)).ToArray());
+
+	/// <summary>带代表色 / 图标的 catalog（日程快照要验颜色透传与哈希回退，默认全部可见）。</summary>
+	private static GameCatalog MakeCatalogRich(params (string Id, string Name, string Color, string Icon)[] games)
+		=> MakeCatalogFull(games.Select(g => (g.Id, g.Name, g.Color, g.Icon, false)).ToArray());
+
+	private static GameCatalog MakeCatalogFull(
+		params (string Id, string Name, string Color, string Icon, bool DefaultHidden)[] games)
 	{
 		var payload = new
 		{
@@ -138,7 +157,8 @@ internal static class Program
 			{
 				id = g.Id,
 				name = g.Name,
-				icon = "",
+				icon = g.Icon,
+				color = g.Color,
 				order = i,
 				defaultHidden = g.DefaultHidden,
 				tz = 480,
@@ -803,7 +823,453 @@ internal static class Program
 		Eq("FeedResult 错误透出到 FeedError", "离线", vmSample.FeedError);
 	}
 
-	// ================================================================ 15. FeedClient
+	// ================================================================ 15. catalog 代表色
+
+	/// <summary>
+	/// 日程视图「颜色 = 游戏」的唯一真源：gen-catalog 从 core 的 SOURCES 抽 color 写进 catalog，
+	/// Core 侧经 <see cref="CatalogEntry.Color"/> 透出。这里锁住抽取结果与"缺字段按空串"的兼容性。
+	/// </summary>
+	private static void TestCatalogColor()
+	{
+		Section("catalog 代表色（core SOURCES → data/catalog.json → CatalogEntry.Color）");
+		var catalog = GameCatalog.Load();
+		Eq("genshin 代表色", "#3FA9A0", catalog.Find("genshin")!.Color);
+		Eq("hsr 代表色", "#6C6FE0", catalog.Find("hsr")!.Color);
+		Eq("zzz 代表色", "#E0A93B", catalog.Find("zzz")!.Color);
+		Eq("颜色覆盖率 28/28", 28, catalog.Games.Count(g => Regex.IsMatch(g.Color, "^#[0-9A-Fa-f]{6}$")));
+		Eq("CatalogEntry.Color 默认空串", "", new CatalogEntry().Color);
+		var legacy = GameCatalog.FromJson("""{"schemaVersion":1,"games":[{"id":"x","name":"X","order":0}]}""");
+		Eq("旧 catalog 缺 color 字段按空串（运行期哈希回退）", "", legacy.Find("x")!.Color);
+	}
+
+	// ================================================================ 16. 日程条目形状
+
+	private static void TestScheduleItemShape()
+	{
+		Section("ScheduleItem 形状（Title / DatesText / RawTip / 双侧 / down 无内容不出条目）");
+		var catalog = MakeCatalogRich(
+			("ba-cn", "蔚蓝档案", "", ""),
+			("genshin", "原神", "#3FA9A0", "https://icon/genshin.png"),
+			("multi", "双列游戏", "", ""),
+			("empty", "无内容游戏", "", ""),
+			("down", "抓取失败游戏", "", ""),
+			("stalegame", "沿用旧数据游戏", "", ""));
+
+		var feed = MakeFeed(
+			("ba-cn", Rec(roles: "「白子(乐队)」、「和纱(乐队)」", banner: "「XX」招募",
+				bannerDates: "10-19 00:00 ~ 10-25 19:08", bannerDatesRaw: "10-19 00:00 ~ 10-25 19:08")),
+			("genshin", Rec(banner: "「虚星临渡」", bannerDates: "10-19 00:00 ~ 10-25 19:08")),
+			("multi", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-25 19:08",
+				eventText: "活动名", eventDates: "10-20 00:00 ~ 10-27 00:00")),
+			("empty", Rec()),
+			("down", Rec(gachaFail: Down("HTTP 500"), eventFail: Down("HTTP 403"))),
+			("stalegame", Rec(banner: "旧池", bannerDates: "10-19 00:00 ~ 10-25 19:08",
+				gachaFail: Down("超时"), gachaStale: true)));
+
+		var snap = ScheduleBuilder.Build(feed, catalog, new WidgetSettings(), Now);
+		ScheduleItem Of(string id, string side = "gacha") => snap.Items.First(i => i.GameId == id && i.Side == side);
+
+		Eq("BA 卡池 Title 走 CleanRoleNames 且保留换装括号", "白子(乐队)、和纱(乐队)", Of("ba-cn").Title);
+		Eq("卡池 Side", "gacha", Of("ba-cn").Side);
+		True("卡池 IsGacha", Of("ba-cn").IsGacha);
+		Eq("DatesText 取 bannerDates", "10-19 00:00 ~ 10-25 19:08", Of("ba-cn").DatesText);
+		Eq("RawTip 用 raw 时间字段", "白子(乐队)、和纱(乐队)\n10-19 00:00 ~ 10-25 19:08", Of("ba-cn").RawTip);
+		Eq("缺角色名时 Title 退回池名", "「虚星临渡」", Of("genshin").Title);
+		Eq("活动侧 Title 取 event", "活动名", Of("multi", "event").Title);
+		Eq("活动侧 Side", "event", Of("multi", "event").Side);
+		False("活动侧 IsGacha", Of("multi", "event").IsGacha);
+		Eq("双侧都有内容 → 2 条", 2, snap.Items.Count(i => i.GameId == "multi"));
+		Eq("两侧都无内容 → 不出条目", 0, snap.Items.Count(i => i.GameId == "empty"));
+		Eq("down 且无内容 → 两侧都不出条目", 0, snap.Items.Count(i => i.GameId == "down"));
+		Eq("down 但沿用旧数据 → 仍出条目", 1, snap.Items.Count(i => i.GameId == "stalegame"));
+		Eq("IconUrl 透传 catalog 图标", "https://icon/genshin.png", Of("genshin").IconUrl);
+		Eq("GameName 透传", "原神", Of("genshin").GameName);
+
+		// raw 为空时回落到外显文本（悬停不能空白）
+		var fallback = ScheduleBuilder.Build(
+			MakeFeed(("genshin", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-25 19:08"))),
+			catalog, new WidgetSettings(), Now);
+		Eq("raw 为空时 RawTip 回落外显文本", "池\n10-19 00:00 ~ 10-25 19:08", fallback.Items[0].RawTip);
+
+		// 只有标题、没有时间文本：条目仍在（长期），时间字段为 null
+		var onlyTitleCatalog = MakeCatalogRich(("t", "只有标题", "", ""));
+		var onlyTitle = ScheduleBuilder.Build(MakeFeed(("t", Rec(banner: "仅标题"))), onlyTitleCatalog, new WidgetSettings(), Now);
+		Eq("只有标题也出条目", 1, onlyTitle.Items.Count);
+		Eq("只有标题时 RawTip 就是标题", "仅标题", onlyTitle.Items[0].RawTip);
+		Eq("无时间文本 → 长期", ScheduleState.Long, onlyTitle.Items[0].State);
+		Eq("无时间文本 → DatesText 空串", "", onlyTitle.Items[0].DatesText);
+		Null("无窗口 Start 为 null", onlyTitle.Items[0].Start);
+		Null("无窗口 End 为 null", onlyTitle.Items[0].End);
+
+		// feed 里没有这款游戏的记录 → 不出条目
+		Eq("feed 无记录 → 不出条目", 0,
+			ScheduleBuilder.Build(new FeedDocument(), catalog, new WidgetSettings(), Now).Items.Count);
+	}
+
+	// ================================================================ 17. 状态五态
+
+	private static void TestScheduleStates()
+	{
+		Section("ScheduleState 五态 + 跨年窗口 + >366 天长期");
+		var catalog = MakeCatalogRich(
+			("live", "在期", "", ""),
+			("wait", "未开始", "", ""),
+			("ended", "已结束", "", ""),
+			("longtext", "长期文本", "", ""));
+
+		var feed = MakeFeed(
+			("live", Rec(banner: "池", bannerDates: "10-13 18:00 ~ 11-03 14:59")),
+			("wait", Rec(banner: "池", bannerDates: "11-01 10:00 ~ 11-10 10:00")),
+			("ended", Rec(banner: "池", bannerDates: "09-01 10:00 ~ 09-30 10:00")),
+			("longtext", Rec(banner: "池", bannerDates: "长期")));
+
+		var snap = ScheduleBuilder.Build(feed, catalog, new WidgetSettings(), Now);
+		ScheduleItem Of(string id) => snap.Items.First(i => i.GameId == id);
+
+		Eq("在期 → Live", ScheduleState.Live, Of("live").State);
+		Eq("未开始 → Waiting", ScheduleState.Waiting, Of("wait").State);
+		Eq("已结束 → Ended", ScheduleState.Ended, Of("ended").State);
+		Eq("解析不出窗口 → Long", ScheduleState.Long, Of("longtext").State);
+		Eq("Long 文案「长期」", "长期", Of("longtext").UrgencyText);
+		True("Live RemainingMs > 0", Of("live").RemainingMs > 0);
+		Eq("Ended RemainingMs = 0", 0L, Of("ended").RemainingMs);
+		Eq("Live StateText 在期", "在期", Of("live").StateText);
+		Eq("Waiting StateText 未开始", "未开始", Of("wait").StateText);
+		Eq("Ended StateText 已结束", "已结束", Of("ended").StateText);
+		Eq("Long StateText 长期", "长期", Of("longtext").StateText);
+		Eq("Unknown StateText 无数据", "无数据", ScheduleBuilder.StateTextOf(ScheduleState.Unknown));
+
+		// 窗口 > 366 天 → 长期。ParseRange 只产出「MM-dd」窗口（最多 366 天），
+		// 所以这条规则直接喂合成窗口锁住（pjsk 那种 2099 哨兵在 DSH 里走的就是它）。
+		Eq("窗口 > 366 天 → Long", ScheduleState.Long,
+			ScheduleBuilder.ClassifyState((Now.AddDays(-10), Now.AddDays(400)), Now));
+		Eq("窗口正好 366 天 → 按位置判定", ScheduleState.Live,
+			ScheduleBuilder.ClassifyState((Now.AddDays(-1), Now.AddDays(365)), Now));
+		Eq("null 窗口 → Long", ScheduleState.Long, ScheduleBuilder.ClassifyState(null, Now));
+
+		// 跨年窗口：1 月视角下 12-30 ~ 01-05 必须在期（起在去年、止在今年）
+		var jan = new DateTime(2026, 1, 2, 12, 0, 0);
+		var crossCatalog = MakeCatalogRich(("x", "跨年", "", ""));
+		var cross = ScheduleBuilder.Build(
+			MakeFeed(("x", Rec(banner: "池", bannerDates: "12-30 12:00 ~ 01-05 12:00"))),
+			crossCatalog, new WidgetSettings(), jan).Items[0];
+		Eq("跨年窗口 → Live", ScheduleState.Live, cross.State);
+		Eq("跨年 Start 落在去年", new DateTime(2025, 12, 30, 12, 0, 0), cross.Start);
+		Eq("跨年 End 落在今年", new DateTime(2026, 1, 5, 12, 0, 0), cross.End);
+	}
+
+	// ================================================================ 18. 紧迫度
+
+	private static void TestScheduleUrgency()
+	{
+		Section("紧迫度文案 / 档位边界（24h、7d、59s / 1min / 1h / 1d）");
+		var now = Now;
+
+		Eq("Live 59 秒 → 今天到期", "今天到期",
+			ScheduleBuilder.FormatUrgency(ScheduleState.Live, now, now, now.AddSeconds(59)));
+		Eq("Live 1 小时 → 今天到期", "今天到期",
+			ScheduleBuilder.FormatUrgency(ScheduleState.Live, now, now, now.AddHours(1)));
+		Eq("Live 23 小时 59 分 → 今天到期", "今天到期",
+			ScheduleBuilder.FormatUrgency(ScheduleState.Live, now, now, now.AddHours(23).AddMinutes(59)));
+		Eq("Live 正好 24 小时 → 还剩 1 天", "还剩 1 天",
+			ScheduleBuilder.FormatUrgency(ScheduleState.Live, now, now, now.AddHours(24)));
+		Eq("Live 25 小时 → 还剩 1 天（按天取整）", "还剩 1 天",
+			ScheduleBuilder.FormatUrgency(ScheduleState.Live, now, now, now.AddHours(25)));
+		Eq("Live 3 天 → 还剩 3 天", "还剩 3 天",
+			ScheduleBuilder.FormatUrgency(ScheduleState.Live, now, now, now.AddDays(3)));
+		Eq("Live 6 天 23 小时 → 还剩 6 天", "还剩 6 天",
+			ScheduleBuilder.FormatUrgency(ScheduleState.Live, now, now, now.AddDays(6).AddHours(23)));
+		Eq("Waiting →「MM-DD HH:mm 开始」", "10-22 10:00 开始",
+			ScheduleBuilder.FormatUrgency(ScheduleState.Waiting, now,
+				new DateTime(2026, 10, 22, 10, 0, 0), new DateTime(2026, 10, 30, 10, 0, 0)));
+		Eq("Waiting 月/日/时/分补零", "11-05 09:07 开始",
+			ScheduleBuilder.FormatUrgency(ScheduleState.Waiting, now,
+				new DateTime(2026, 11, 5, 9, 7, 0), new DateTime(2026, 11, 10, 9, 7, 0)));
+		Eq("Ended → 已结束", "已结束",
+			ScheduleBuilder.FormatUrgency(ScheduleState.Ended, now, now.AddDays(-3), now.AddDays(-1)));
+		Eq("Long → 长期", "长期",
+			ScheduleBuilder.FormatUrgency(ScheduleState.Long, now, null, null));
+		Eq("Unknown → 空串", "",
+			ScheduleBuilder.FormatUrgency(ScheduleState.Unknown, now, null, null));
+
+		Eq("59 秒倒计时写 0 分钟", "0 分钟", ScheduleBuilder.FormatRemainingText(TimeSpan.FromSeconds(59)));
+		Eq("正好 1 分钟", "1 分钟", ScheduleBuilder.FormatRemainingText(TimeSpan.FromMinutes(1)));
+		Eq("59 分钟", "59 分钟", ScheduleBuilder.FormatRemainingText(TimeSpan.FromMinutes(59)));
+		Eq("1 小时", "1 小时", ScheduleBuilder.FormatRemainingText(TimeSpan.FromHours(1)));
+		Eq("23 小时 59 分", "23 小时",
+			ScheduleBuilder.FormatRemainingText(TimeSpan.FromHours(23) + TimeSpan.FromMinutes(59)));
+		Eq("1 天", "1 天", ScheduleBuilder.FormatRemainingText(TimeSpan.FromDays(1)));
+		Eq("1 天半按天取整", "1 天", ScheduleBuilder.FormatRemainingText(TimeSpan.FromDays(1.5)));
+		Eq("零/负值倒计时", "0 分钟", ScheduleBuilder.FormatRemainingText(TimeSpan.FromMinutes(-5)));
+
+		Eq("24h 内 → 档位 1", 1,
+			ScheduleBuilder.UrgencyLevelOf(ScheduleState.Live, now, now.AddHours(23)));
+		Eq("正好 24h → 档位 2", 2,
+			ScheduleBuilder.UrgencyLevelOf(ScheduleState.Live, now, now.AddHours(24)));
+		Eq("6 天 23 小时 → 档位 2", 2,
+			ScheduleBuilder.UrgencyLevelOf(ScheduleState.Live, now, now.AddDays(6).AddHours(23)));
+		Eq("正好 7 天 → 档位 0", 0,
+			ScheduleBuilder.UrgencyLevelOf(ScheduleState.Live, now, now.AddDays(7)));
+		Eq("超过 7 天 → 档位 0", 0,
+			ScheduleBuilder.UrgencyLevelOf(ScheduleState.Live, now, now.AddDays(8)));
+		Eq("未开始 → 档位 3", 3,
+			ScheduleBuilder.UrgencyLevelOf(ScheduleState.Waiting, now, now.AddDays(2)));
+		Eq("已结束 → 档位 0", 0,
+			ScheduleBuilder.UrgencyLevelOf(ScheduleState.Ended, now, now.AddDays(-1)));
+		Eq("长期 → 档位 0", 0,
+			ScheduleBuilder.UrgencyLevelOf(ScheduleState.Long, now, null));
+	}
+
+	// ================================================================ 19. 近期 / 下一个截止
+
+	private static void TestScheduleLists()
+	{
+		Section("Recent / NextUp / NextTwo（只取 Live、End 升序、上限）");
+		var catalog = MakeCatalogRich(
+			("a", "甲", "", ""), ("b", "乙", "", ""), ("c", "丙", "", ""),
+			("d", "丁", "", ""), ("e", "戊", "", ""));
+		var feed = MakeFeed(
+			// +3 天
+			("a", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-24 19:08")),
+			// 卡池 +1 天、活动 +4 天（同一款游戏两条都在期）
+			("b", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-22 19:08",
+				eventText: "活动", eventDates: "10-19 00:00 ~ 10-25 19:08")),
+			// +2 天
+			("c", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-23 19:08")),
+			// 已结束
+			("d", Rec(banner: "池", bannerDates: "10-01 00:00 ~ 10-18 00:00")),
+			// 未开始
+			("e", Rec(banner: "池", bannerDates: "11-01 00:00 ~ 11-05 00:00")));
+
+		var snap = ScheduleBuilder.Build(feed, catalog, new WidgetSettings(), Now);
+		Eq("LiveCount 只数在期", 4, snap.LiveCount);
+		Eq("Items 仍按游戏顺序（不按紧迫度重排）", 4 + 1 + 1, snap.Items.Count);
+		Eq("Recent 只含在期", 4, snap.Recent.Count);
+		SeqEq("Recent 跨游戏按 End 升序", new[] { "b:gacha", "c:gacha", "a:gacha", "b:event" },
+			snap.Recent.Select(i => i.GameId + ":" + i.Side));
+		SeqEq("Items 顺序 = catalog 顺序 × 卡池/活动",
+			new[] { "a:gacha", "b:gacha", "b:event", "c:gacha", "d:gacha", "e:gacha" },
+			snap.Items.Select(i => i.GameId + ":" + i.Side));
+		Eq("NextUp 是 End 最小的一条", "b:gacha", snap.NextUp!.GameId + ":" + snap.NextUp.Side);
+		SeqEq("NextTwo 是 NextUp 之后的两条", new[] { "c:gacha", "a:gacha" },
+			snap.NextTwo.Select(i => i.GameId + ":" + i.Side));
+		False("NextTwo 不含 NextUp", snap.NextTwo.Contains(snap.NextUp));
+
+		var two = ScheduleBuilder.Build(feed, catalog, new WidgetSettings(), Now, recentLimit: 2);
+		Eq("recentLimit 生效", 2, two.Recent.Count);
+		SeqEq("截断后仍按 End 升序", new[] { "b:gacha", "c:gacha" },
+			two.Recent.Select(i => i.GameId + ":" + i.Side));
+		Eq("recentLimit 不影响 NextUp", "b:gacha", two.NextUp!.GameId + ":" + two.NextUp.Side);
+		Eq("recentLimit 不影响 NextTwo 条数", 2, two.NextTwo.Count);
+		Eq("recentLimit=0 → 不列近期", 0,
+			ScheduleBuilder.Build(feed, catalog, new WidgetSettings(), Now, 0).Recent.Count);
+
+		var idle = ScheduleBuilder.Build(
+			MakeFeed(("a", Rec(banner: "池", bannerDates: "10-01 00:00 ~ 10-18 00:00"))),
+			catalog, new WidgetSettings(), Now);
+		Null("没有在期条目 → NextUp 为 null", idle.NextUp);
+		Eq("没有在期条目 → Recent 为空", 0, idle.Recent.Count);
+		Eq("没有在期条目 → NextTwo 为空", 0, idle.NextTwo.Count);
+		Eq("只在期一条 → NextTwo 为空", 0, ScheduleBuilder.Build(
+			MakeFeed(("a", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-24 19:08"))),
+			catalog, new WidgetSettings(), Now).NextTwo.Count);
+	}
+
+	// ================================================================ 20. 总览计数
+
+	private static void TestScheduleGlance()
+	{
+		Section("GlanceText（24 小时内 / 7 天内计数与严格格式）");
+		var catalog = MakeCatalogRich(
+			("g1", "一", "", ""), ("g2", "二", "", ""), ("g3", "三", "", ""),
+			("g4", "四", "", ""), ("g5", "五", "", ""), ("g6", "六", "", ""));
+		var feed = MakeFeed(
+			("g1", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-21 21:08")), // +2 小时
+			("g2", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-22 19:07")), // +23 小时 59 分
+			("g3", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-22 19:08")), // 正好 +24 小时
+			("g4", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-22 20:08")), // +25 小时
+			("g5", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-27 19:08")), // +6 天
+			("g6", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-29 19:08"))); // +8 天
+
+		var snap = ScheduleBuilder.Build(feed, catalog, new WidgetSettings(), Now);
+		Eq("LiveCount 6", 6, snap.LiveCount);
+		Eq("24h 含正好 24h；7d 只到 7 天内", "24 小时内 3 条 · 7 天内 5 条", snap.GlanceText);
+
+		Eq("零也照写格式", "24 小时内 0 条 · 7 天内 0 条",
+			ScheduleBuilder.Build(new FeedDocument(), catalog, new WidgetSettings(), Now).GlanceText);
+		Eq("全已结束时两个 0 也照写", "24 小时内 0 条 · 7 天内 0 条",
+			ScheduleBuilder.Build(
+				MakeFeed(("g1", Rec(banner: "池", bannerDates: "09-01 00:00 ~ 09-30 00:00"))),
+				catalog, new WidgetSettings(), Now).GlanceText);
+	}
+
+	// ================================================================ 21. 颜色
+
+	private static void TestScheduleColors()
+	{
+		Section("颜色：catalog 优先 / 空串按游戏名哈希落固定色盘");
+		string[] palette = { "#E0709F", "#3FA9A0", "#E0A93B", "#4A6CF7", "#7A5AF8", "#2FB3C9", "#E06C4A", "#5C9E3F" };
+
+		Eq("catalog 颜色优先", "#3FA9A0", ScheduleBuilder.GameColor("#3FA9A0", "任意名字"));
+		Eq("catalog 颜色非空即用（不回验格式）", "#abcdef", ScheduleBuilder.GameColor("#abcdef", "原神"));
+		Eq("空串 → 名字哈希", "#5C9E3F", ScheduleBuilder.GameColor("", "原神"));
+		Eq("null → 名字哈希", "#E0709F", ScheduleBuilder.GameColor(null, "崩坏：星穹铁道"));
+		Eq("纯空白视为未指定", "#5C9E3F", ScheduleBuilder.GameColor("   ", "原神"));
+		Eq("emoji 按码点哈希（与 DSH 的 for...of 同口径）", "#2FB3C9", ScheduleBuilder.GameColor("", "🎮游戏"));
+		Eq("空名字也有确定色", "#E0709F", ScheduleBuilder.GameColor("", ""));
+		Eq("同名恒同色", ScheduleBuilder.GameColor("", "自定义条目"), ScheduleBuilder.GameColor("", "自定义条目"));
+		True("哈希结果落在固定色盘内", palette.Contains(ScheduleBuilder.GameColor("", "自定义条目")));
+		True("不同名字可落不同色",
+			ScheduleBuilder.GameColor("", "原神") != ScheduleBuilder.GameColor("", "崩坏：星穹铁道"));
+
+		var catalog = MakeCatalogRich(("with", "带色游戏", "#123456", ""), ("without", "原神", "", ""));
+		var feed = MakeFeed(
+			("with", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-25 19:08")),
+			("without", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-25 19:08")));
+		var snap = ScheduleBuilder.Build(feed, catalog, new WidgetSettings(), Now);
+		Eq("条目用 catalog 色", "#123456", snap.Items.First(i => i.GameId == "with").Color);
+		Eq("条目空色回退哈希", "#5C9E3F", snap.Items.First(i => i.GameId == "without").Color);
+	}
+
+	// ================================================================ 22. 可见性
+
+	private static void TestScheduleVisibility()
+	{
+		Section("日程条目复用可见性 / 排序规则（hidden / shown / removed / order）");
+		var catalog = MakeCatalogFull(
+			("a", "甲", "", "", false),
+			("b", "乙", "", "", true),
+			("c", "丙", "", "", false),
+			("d", "丁", "", "", false));
+		var feed = MakeFeed(
+			("a", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-25 19:08")),
+			("b", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-25 19:08")),
+			("c", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-25 19:08")),
+			("d", Rec(banner: "池", bannerDates: "10-19 00:00 ~ 10-25 19:08")));
+
+		SeqEq("默认隐藏的游戏不进日程", new[] { "a", "c", "d" },
+			ScheduleBuilder.Build(feed, catalog, new WidgetSettings(), Now).Items.Select(i => i.GameId));
+
+		var shown = new WidgetSettings();
+		shown.Shown.Add("b");
+		SeqEq("shown 打开后进日程", new[] { "a", "b", "c", "d" },
+			ScheduleBuilder.Build(feed, catalog, shown, Now).Items.Select(i => i.GameId));
+
+		var hidden = new WidgetSettings();
+		hidden.Hidden.Add("a");
+		SeqEq("hidden 不进日程", new[] { "c", "d" },
+			ScheduleBuilder.Build(feed, catalog, hidden, Now).Items.Select(i => i.GameId));
+
+		var removed = new WidgetSettings();
+		removed.Removed.Add("c");
+		SeqEq("removed 不进日程", new[] { "a", "d" },
+			ScheduleBuilder.Build(feed, catalog, removed, Now).Items.Select(i => i.GameId));
+
+		var ordered = new WidgetSettings();
+		ordered.Order.AddRange(new[] { "d", "a" });
+		SeqEq("order 优先（日程顺序与表格一致）", new[] { "d", "a", "c" },
+			ScheduleBuilder.Build(feed, catalog, ordered, Now).Items.Select(i => i.GameId));
+	}
+
+	// ================================================================ 23. 视图模型集成
+
+	private static void TestScheduleViewModel()
+	{
+		Section("WidgetViewModel 暴露日程快照（属性 / 通知 / RowVm 挂载 / Tick 重算）");
+		var catalog = MakeCatalogRich(("g1", "计时游戏", "#3FA9A0", ""), ("g2", "仅活动游戏", "", ""));
+		var vm = new WidgetViewModel(catalog);
+		var changed = new List<string>();
+		vm.PropertyChanged += (_, e) => changed.Add(e.PropertyName ?? "");
+
+		var feed = MakeFeed(
+			("g1", Rec(banner: "卡池", bannerDates: "10-19 00:00 ~ 11-03 19:08")),         // +13 天
+			("g2", Rec(eventText: "活动", eventDates: "10-19 00:00 ~ 10-22 19:08")));      // 正好 +24 小时
+
+		vm.Apply(feed, new WidgetSettings(), Now);
+		NotNull("Apply 后有快照", vm.Schedule);
+		Eq("Recent 数量与快照一致", vm.Schedule!.Recent.Count, vm.Recent.Count);
+		Eq("NextUp 与快照一致", vm.Schedule.NextUp!.GameId, vm.NextUp!.GameId);
+		Eq("NextTwo 数量与快照一致", vm.Schedule.NextTwo.Count, vm.NextTwo.Count);
+		Eq("GlanceText 与快照一致", vm.Schedule.GlanceText, vm.GlanceText);
+		Eq("GlanceText 文案", "24 小时内 1 条 · 7 天内 1 条", vm.GlanceText);
+		True("Apply 通知 Schedule", changed.Contains(nameof(WidgetViewModel.Schedule)));
+		True("Apply 通知 Recent", changed.Contains(nameof(WidgetViewModel.Recent)));
+		True("Apply 通知 NextUp", changed.Contains(nameof(WidgetViewModel.NextUp)));
+		True("Apply 通知 NextTwo", changed.Contains(nameof(WidgetViewModel.NextTwo)));
+		True("Apply 通知 GlanceText", changed.Contains(nameof(WidgetViewModel.GlanceText)));
+
+		var row1 = vm.Rows.First(r => r.GameId == "g1");
+		var row2 = vm.Rows.First(r => r.GameId == "g2");
+		NotNull("RowVm.Gacha 已挂载", row1.Gacha);
+		Eq("RowVm.Gacha 就是快照里的那一条", vm.Schedule.Items.First(i => i.GameId == "g1" && i.Side == "gacha"), row1.Gacha);
+		Eq("RowVm.Gacha.Side", "gacha", row1.Gacha!.Side);
+		Eq("RowVm.Gacha 颜色来自 catalog", "#3FA9A0", row1.Gacha.Color);
+		Eq("RowVm.Gacha 紧迫度（13 天）", "还剩 13 天", row1.Gacha.UrgencyText);
+		Null("g1 无活动侧 → RowVm.Event 为 null", row1.Event);
+		Null("g2 无卡池侧 → RowVm.Gacha 为 null", row2.Gacha);
+		NotNull("g2 活动侧已挂载", row2.Event);
+		Eq("RowVm.Event.Side", "event", row2.Event!.Side);
+
+		// Tick 跨分钟：紧迫度文案要变、要发通知、RowVm 要跟着换成新条目
+		changed.Clear();
+		var before = row1.Gacha;
+		vm.Tick(Now.AddMinutes(1));
+		Eq("Tick 后紧迫度重算", "还剩 12 天",
+			vm.Schedule!.Items.First(i => i.GameId == "g1").UrgencyText);
+		True("Tick 通知 Schedule", changed.Contains(nameof(WidgetViewModel.Schedule)));
+		True("Tick 通知 GlanceText", changed.Contains(nameof(WidgetViewModel.GlanceText)));
+		True("Tick 后 RowVm.Gacha 指向新条目", !ReferenceEquals(before, row1.Gacha));
+		Eq("RowVm 与快照保持同步",
+			vm.Schedule.Items.First(i => i.GameId == "g1" && i.Side == "gacha"), row1.Gacha);
+
+		changed.Clear();
+		vm.Tick(Now.AddMinutes(1).AddSeconds(20));
+		False("同一分钟内不重算、不通知", changed.Contains(nameof(WidgetViewModel.Schedule)));
+
+		vm.ShowError("网络挂了");
+		Null("ShowError 后快照为 null", vm.Schedule);
+		Eq("ShowError 后 Recent 为空", 0, vm.Recent.Count);
+		Eq("ShowError 后 NextTwo 为空", 0, vm.NextTwo.Count);
+		Null("ShowError 后 NextUp 为 null", vm.NextUp);
+		Eq("ShowError 后 GlanceText 空串", "", vm.GlanceText);
+	}
+
+	// ================================================================ 24. 真实数据
+
+	private static void TestScheduleRealFeed()
+	{
+		Section("日程快照（真实 sample-feed 冒烟）");
+		var catalog = GameCatalog.Load();
+		var feed = FeedDocument.Parse(EmbeddedData.SampleFeedJson())!;
+		var snap = ScheduleBuilder.Build(feed, catalog, new WidgetSettings(), Now);
+
+		True("真实 feed 有条目", snap.Items.Count > 20);
+		True("条目数不超过「可见游戏 × 2」", snap.Items.Count <= 23 * 2);
+		Eq("每条都有 #RRGGBB 颜色", snap.Items.Count,
+			snap.Items.Count(i => Regex.IsMatch(i.Color, "^#[0-9A-Fa-f]{6}$")));
+		Eq("每条都有 GameName", snap.Items.Count, snap.Items.Count(i => i.GameName.Length > 0));
+		True("GlanceText 格式正确", Regex.IsMatch(snap.GlanceText, @"^24 小时内 \d+ 条 · 7 天内 \d+ 条$"));
+		True("Recent 不超过 6 条", snap.Recent.Count <= 6);
+		True("Recent 全是在期", snap.Recent.All(i => i.State == ScheduleState.Live));
+		True("Recent 按 End 升序", snap.Recent.Select(i => i.End)
+			.SequenceEqual(snap.Recent.Select(i => i.End).OrderBy(x => x)));
+		True("NextTwo 至多 2 条", snap.NextTwo.Count <= 2);
+		True("在期条目的紧迫度文案只有两种前缀",
+			snap.Items.Where(i => i.State == ScheduleState.Live).All(i =>
+				i.UrgencyText.StartsWith("还剩 ", StringComparison.Ordinal) || i.UrgencyText == "今天到期"));
+		True("条目颜色都来自 catalog 或固定色盘",
+			snap.Items.All(i => catalog.Games.Any(g => g.Id == i.GameId && g.Color == i.Color)
+				|| i.Color.Length == 7));
+
+		var vm = new WidgetViewModel(catalog);
+		vm.Apply(feed, new WidgetSettings(), Now);
+		Eq("真实数据 23 行（5 款出厂默认隐藏）", 23, vm.Rows.Count);
+		True("每行两侧条目的类型正确",
+			vm.Rows.All(r => (r.Gacha == null || r.Gacha.IsGacha) && (r.Event == null || !r.Event.IsGacha)));
+		True("每行至少一侧挂了日程条目", vm.Rows.Any(r => r.Gacha != null || r.Event != null));
+	}
+
+	// ================================================================ 25. FeedClient
 
 	private static async Task TestFeedClient()
 	{

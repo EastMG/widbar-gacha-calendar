@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <UserControl
     x:Class="GachaWidget.Views.PreviewView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -11,29 +11,31 @@
 
     <UserControl.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibility" />
-        <conv:EnumEqualsToVisibilityConverter x:Key="EnumEquals" />
+        <conv:GameNameToBrushConverter x:Key="GameBrush" />
     </UserControl.Resources>
 
     <!-- 根透明：任务栏背景由 WidBar 负责，不要自己画 -->
     <StackPanel
         Orientation="Horizontal"
-        Spacing="6"
-        Padding="4,0"
+        Spacing="8"
+        Padding="6,0"
         VerticalAlignment="Center">
 
-        <!-- 数据不是最新时给一个小标记，避免把"示例/缓存"当成实时数据 -->
-        <TextBlock
+        <!-- 数据非实时时只留一个小圆点（比文字省空间），含义放 tooltip -->
+        <Border
+            Width="6"
+            Height="6"
             VerticalAlignment="Center"
-            FontSize="10"
-            Foreground="{ThemeResource SystemFillColorCautionBrush}"
-            Text="示例"
-            ToolTipService.ToolTip="网络暂不可用，当前显示内置示例数据"
+            Background="{ThemeResource SystemFillColorCautionBrush}"
+            CornerRadius="3"
+            ToolTipService.ToolTip="网络暂不可用，当前显示示例数据"
             Visibility="{x:Bind Vm.IsSample, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
-        <TextBlock
+        <Border
+            Width="6"
+            Height="6"
             VerticalAlignment="Center"
-            FontSize="10"
-            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-            Text="缓存"
+            Background="{ThemeResource TextFillColorTertiaryBrush}"
+            CornerRadius="3"
             ToolTipService.ToolTip="网络暂不可用，当前显示上次成功缓存的数据"
             Visibility="{x:Bind Vm.IsCached, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
 
@@ -42,28 +44,27 @@
             ItemsSource="{x:Bind Vm.Chips, Mode=OneWay}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                    <StackPanel Orientation="Horizontal" Spacing="6" />
+                    <StackPanel Orientation="Horizontal" Spacing="8" />
                 </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="vm:ChipVm">
                     <Border
-                        Padding="8,3"
+                        Padding="9,3,10,3"
                         Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                        BorderThickness="1"
-                        CornerRadius="6"
+                        CornerRadius="8"
                         ToolTipService.ToolTip="{x:Bind Tip}">
-                        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
+                        <StackPanel Orientation="Horizontal" Spacing="7" VerticalAlignment="Center">
+                            <!-- 颜色 = 游戏（与面板里的迷你条同色） -->
                             <Border
-                                Width="3"
-                                Height="14"
-                                Background="{ThemeResource AccentFillColorDefaultBrush}"
-                                CornerRadius="1.5"
+                                Width="6"
+                                Height="6"
+                                Background="{x:Bind GameName, Converter={StaticResource GameBrush}}"
+                                CornerRadius="3"
                                 VerticalAlignment="Center" />
                             <TextBlock
                                 VerticalAlignment="Center"
-                                MaxWidth="62"
+                                MaxWidth="64"
                                 FontSize="12"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 Text="{x:Bind GameName}"
