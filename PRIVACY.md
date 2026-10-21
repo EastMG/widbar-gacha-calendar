@@ -1,6 +1,8 @@
-# 隐私政策 · 二游日历 for WidBar
+﻿# 隐私政策 · 二游日历 for WidBar
 
 生效日期：2026-10-21
+
+> 在线版（商店填写用）：https://eastmg.github.io/widbar-gacha-calendar/privacy/
 
 本应用（以下称「本应用」）是 Windows 11 任务栏小组件 **WidBar** 的一个第三方组件，用于展示
 二次元手游的卡池与活动排期。

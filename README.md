@@ -143,5 +143,5 @@ MIT © 2026 EastMG
 
 - CI（GitHub Actions）：push 到 `main` 自动跑 Core 单测 + widget 构建 + 用 **VS MSBuild** 出 `.msixupload`，
   产物在 Actions 运行的 `msix` artifact 里。
-- 商店：Partner Center 上传该 `.msixupload`；`Package.appxmanifest` 的 Publisher 需与 Partner Center 身份一致。
+- 商店：文案/截图/URL 见 [`docs/08-商店提交材料.md`](docs/08-商店提交材料.md)；Partner Center 上传 `.msixupload`，Publisher 需与账号一致。
 - 开发期联调：`tools\install-signed.ps1`（自签证书 + 正式安装；松散注册的包会被 WidBar 管道拒绝）。
