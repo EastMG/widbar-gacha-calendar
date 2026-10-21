@@ -1,5 +1,6 @@
-# widbar-gacha-calendar
+﻿# widbar-gacha-calendar
 
+[![build](https://github.com/EastMG/widbar-gacha-calendar/actions/workflows/build.yml/badge.svg)](https://github.com/EastMG/widbar-gacha-calendar/actions/workflows/build.yml)
 [![license](https://img.shields.io/github/license/EastMG/widbar-gacha-calendar.svg)](./LICENSE)
 ![Windows 11](https://img.shields.io/badge/Windows-11-0078D4?logo=windows11&logoColor=white)
 ![WidBar](https://img.shields.io/badge/WidBar-widget-4D6BFE)
