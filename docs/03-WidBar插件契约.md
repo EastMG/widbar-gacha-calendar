@@ -232,3 +232,17 @@ dotnet build src\GachaWidget\GachaWidget.csproj -c Release -p:Platform=x64
 
 ⇒ 插件 `CreateSettingsContent()` 返回的元素**不要**再套 `ScrollViewer`、不要自带外边距/窄 MaxWidth。
 本仓库按此契约重排设置页，详见 [`docs/07-设置页设计.md`](07-设置页设计.md)。
+
+### 7.9 设计冒烟截图的两个坑（0.1.21 记录）
+
+1. **不要按进程名杀 `GachaWidget`**：设计 harness 和已经安装的 widget 是同一个 exe 名。
+   截图脚本里写 `Get-Process GachaWidget | Stop-Process -Force` 会把真机 widget 一起杀掉，
+   宿主连续 3 次 `Pipe disconnected` 后会触发 crash protection **禁用插件**（`widbar.log` 里
+   `Disabled ... after 3 consecutive failure(s)`）。截图脚本请按路径过滤：
+   ```powershell
+   Get-Process GachaWidget | Where-Object { $_.Path -notlike '*\WindowsApps\*' } | Stop-Process -Force
+   ```
+   真被禁用了也不用手动点：**重启 WidBar**（`explorer shell:AppsFolder\30113AndreaDelBello.WidBar-WidgetTaskbarsystem_2mj5svk4jk01m!App`）即可重新启用。
+2. **枚举任务栏预览窗口时**，它的父窗口是 explorer 的任务栏（不是本进程的顶层窗口）；
+   `EnumWindows` 里若先按父窗口 pid 过滤，会永远找不到预览窗口——要枚举所有顶层窗口的
+   `EnumChildWindows`，再按子窗口 pid 匹配；并先 `SetProcessDpiAwarenessContext(-4)` 取物理坐标。
