@@ -246,3 +246,22 @@ dotnet build src\GachaWidget\GachaWidget.csproj -c Release -p:Platform=x64
 2. **枚举任务栏预览窗口时**，它的父窗口是 explorer 的任务栏（不是本进程的顶层窗口）；
    `EnumWindows` 里若先按父窗口 pid 过滤，会永远找不到预览窗口——要枚举所有顶层窗口的
    `EnumChildWindows`，再按子窗口 pid 匹配；并先 `SetProcessDpiAwarenessContext(-4)` 取物理坐标。
+
+### 7.10 构建告警：`mspdbcmf.exe` could not be found（预期，无影响）
+
+本地 `tools/install-signed.ps1` 出 **Test 版 MSIX** 时会有一条：
+
+```
+warning : Path to `mspdbcmf.exe` could not be found. A symbols package will not be generated.
+```
+
+结论：**可以忽略**。
+
+- 它只表示没生成 **`.appxsym` 符号包**（给商店/ Watson 还原崩溃栈用的可选产物），
+  不影响 MSIX 内容、签名、安装、运行；商店上传也不要求符号包。
+- `mspdbcmf.exe` 属于 Visual Studio 的 **MSVC C++ 生成工具**；本机是纯 dotnet CLI 构建，没有这个组件。
+- 已验证：加 `-p:AppxSymbolPackageEnabled=false` **并不能**消掉该告警（WinAppSDK 的
+  `_EnsurePdbCmfExeFullPath` 作为 `_GenerateAppxSymbolPackage` 的 DependsOnTargets 先执行，
+  目标条件判断在后），所以不值得为它改构建参数。
+- CI 里 `Build widget` 步骤是 **0 Warning**；这条只出现在本地 Test 打包。
+- 真要消掉：安装 Visual Studio「使用 C++ 的桌面开发」/ MSVC 生成工具（体积很大，v0 没必要）。
