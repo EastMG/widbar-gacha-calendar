@@ -193,3 +193,14 @@ Flyout prewarmed for '648ce38d…'.
 | `DataDirectory\widget.log`（0.1.10+） | 初始化、首帧来源、每次刷新的 status/error/耗时/条数 |
 | `…\EastMG.GachaCalendar_8c3jes7x0pqng\LocalState\Logs\widbar-sdk.*.log` | SDK 侧握手与 preview 创建过程 |
 
+### 7.6 两个只有实机才会暴露的 UI 坑（0.1.15 / 0.1.16 修）
+
+1. **首帧状态不会刷新**：`WidgetViewModel.Apply` 里 `_status/_isSample` 是**直接改字段**，
+   没有发 `PropertyChanged`，于是预览条的「示例」标记永远停在首帧（刷新成功后也不消失）。
+   修法：Apply 里显式 `Raise(Status/IsSample/IsCached)`，并补了单测锁住。
+   **教训：WinUI 的 x:Bind OneWay 只认 INotifyPropertyChanged，字段赋值不算。**
+2. **预览宽度不是"设了就生效"**：`PreviewLogicalWidth` 在 `InitializeAsync` 阶段请求重排时，
+   预览窗口还没创建，宿主会忽略；必须在 `CreatePreviewContent()` **之后**再
+   `RequestPreviewRefresh()`。另外 chip 实际宽度约 117dip，按 120dip 预留（3 条 = 372dip），
+   名称限宽 62dip —— 按 112dip 估算会把第 3 条裁掉。
+
