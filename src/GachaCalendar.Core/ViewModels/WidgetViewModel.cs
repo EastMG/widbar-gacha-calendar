@@ -80,6 +80,9 @@ public sealed class WidgetViewModel : INotifyPropertyChanged
 		}
 	}
 
+	/// <summary>当前展示的是"上次成功缓存"（网络失败回退）。</summary>
+	public bool IsCached => _status == FeedStatus.Cached;
+
 	public bool ShowGacha { get => _showGacha; private set => Set(ref _showGacha, value); }
 
 	public bool ShowEvent { get => _showEvent; private set => Set(ref _showEvent, value); }
@@ -102,10 +105,14 @@ public sealed class WidgetViewModel : INotifyPropertyChanged
 		_feed = feed;
 		_catalog = catalog;
 		_settings = settings ?? new WidgetSettings();
-		// 兜底：调用方可能还没 Normalize（例如从 JSON 直接反序列化后忘了调用）。
-		_settings.Normalize(catalog);
 		_status = status;
 		_isSample = status == FeedStatus.Sample;
+		// 直接改字段时要手动通知：外壳（预览条的「示例/缓存」标记）依赖这几个属性。
+		Raise(nameof(Status));
+		Raise(nameof(IsSample));
+		Raise(nameof(IsCached));
+		// 兜底：调用方可能还没 Normalize（例如从 JSON 直接反序列化后忘了调用）。
+		_settings.Normalize(catalog);
 		_lastNow = now;
 		ShowGacha = _settings.ShowGacha;
 		ShowEvent = _settings.ShowEvent;

@@ -28,14 +28,14 @@
             Foreground="{ThemeResource SystemFillColorCautionBrush}"
             Text="示例"
             ToolTipService.ToolTip="网络暂不可用，当前显示内置示例数据"
-            Visibility="{x:Bind Vm.Status, Mode=OneWay, Converter={StaticResource EnumEquals}, ConverterParameter=Sample}" />
+            Visibility="{x:Bind Vm.IsSample, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
         <TextBlock
             VerticalAlignment="Center"
             FontSize="10"
             Foreground="{ThemeResource TextFillColorTertiaryBrush}"
             Text="缓存"
             ToolTipService.ToolTip="网络暂不可用，当前显示上次成功缓存的数据"
-            Visibility="{x:Bind Vm.Status, Mode=OneWay, Converter={StaticResource EnumEquals}, ConverterParameter=Cached}" />
+            Visibility="{x:Bind Vm.IsCached, Mode=OneWay, Converter={StaticResource BoolToVisibility}}" />
 
         <ItemsControl
             VerticalAlignment="Center"

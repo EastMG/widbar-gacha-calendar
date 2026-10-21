@@ -18,7 +18,7 @@ namespace GachaWidget.Plugin;
 /// </summary>
 public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IWidgetFlyoutLifecycle
 {
-	private const string PluginVersion = "0.1.14";
+	private const string PluginVersion = "0.1.15";
 	private const string PluginId = "com.eastmg.gachacalendar";
 	private const string PluginName = "二游日历";
 
@@ -139,6 +139,9 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 		GachaWidget.Diagnostics.PluginLog.Write($"CreatePreviewContent; chips={_vm?.Chips.Count}; width={PreviewLogicalWidth}");
 		if (_vm is null) return null;
 		_preview = new PreviewView(_vm);
+
+		// 预览窗口创建完成后再请宿主重排一次：初始化阶段的请求发生在预览创建之前，宿主会忽略。
+		_queue?.TryEnqueue(_ => _context?.RequestPreviewRefresh());
 		return _preview;
 	}
 
