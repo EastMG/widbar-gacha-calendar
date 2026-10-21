@@ -50,15 +50,16 @@
 视觉对齐 DSH 版 `newPanel` 的日程视图语言（**颜色=游戏 / 图案=状态 / 文字=紧迫度**）+
 WinUI 3 Fluent 规范（主题资源、8px 网格、卡片、克制的分隔线）：
 
-| 任务栏预览条 | 展开面板 |
+| 任务栏预览条（372×48） | 展开面板（830×580） |
 |---|---|
-| ![任务栏预览条](docs/images/design-preview.png) | ![展开面板](docs/images/design-flyout.png) |
+| ![任务栏预览条](docs/images/widbar-preview.png) | ![展开面板](docs/images/widbar-flyout.png) |
 
-![设置页](docs/images/design-settings.png)
+![设置页（宿主 1120×820 窗口）](docs/images/widbar-settings.png)
 
-> 以上由 `GachaWidget.exe --ui-preview=preview|flyout|settings` 按真实尺寸渲染后截图
-> （深色主题、150% 缩放、内置示例数据）；WidBar 里会自动跟随系统深浅色。
-> 浅色主题截图见 `docs/images/design-*-light.png`（`--theme=light`）。设置页为什么这样排：见 [`docs/07-设置页设计.md`](docs/07-设置页设计.md)（宿主 chrome 契约 + WinUI SettingsCard）。
+> 以上为 **WidBar 1.2.8 真机截图**（0.1.20，系统浅色主题，150% 缩放）：
+> 预览条补足 3 条不再裁切、面板是 newPanel 日程视图、设置页用宿主的 1120×820 chrome。
+> 深色版见 `docs/images/design-*-light.png` 同名 dark 文件；设置页为什么这样排见
+> [`docs/07-设置页设计.md`](docs/07-设置页设计.md)。
 
 ### 设计冒烟（不装 WidBar 也能看效果）
 
