@@ -40,7 +40,7 @@ public sealed record FeedResult(FeedDocument? Document, FeedStatus Status, strin
 /// - 任何失败都不抛给调用方（除了调用方自己取消）：缓存 → 内置示例 feed 逐级兜底；
 /// - 与 UI 线程无关，纯 async，不引用任何 UI 类型。
 /// </summary>
-public sealed class FeedClient : IDisposable
+public sealed class FeedClient : IFeedProvider
 {
 	public const string UserAgent = "WidBarGachaCalendar/0.1 (+https://github.com/EastMG/gacha-calendar)";
 

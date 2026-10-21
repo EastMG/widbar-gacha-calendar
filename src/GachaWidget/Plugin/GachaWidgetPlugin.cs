@@ -1,4 +1,4 @@
-using GachaCalendar.Core.Models;
+﻿using GachaCalendar.Core.Models;
 using GachaCalendar.Core.Services;
 using GachaCalendar.Core.ViewModels;
 using GachaWidget.Views;
@@ -18,7 +18,7 @@ namespace GachaWidget.Plugin;
 /// </summary>
 public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IWidgetFlyoutLifecycle
 {
-	private const string PluginVersion = "0.1.13";
+	private const string PluginVersion = "0.1.14";
 	private const string PluginId = "com.eastmg.gachacalendar";
 	private const string PluginName = "二游日历";
 
@@ -31,7 +31,9 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 	private IWidgetContext? _context;
 	private DispatcherQueue? _queue;
 	private CatalogStore? _catalogStore;
-	private FeedClient? _feedClient;
+
+	// v0 用 FeedClient（静态快照）；v1 换成内嵌 core 的 EngineFeedProvider，只有这一处要改。
+	private IFeedProvider? _feedClient;
 	private WidgetViewModel? _vm;
 	private WidgetSettings _settings = new();
 	private PreviewView? _preview;

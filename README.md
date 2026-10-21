@@ -17,15 +17,17 @@
 
 ## 当前状态
 
-**v0.1 开发中**：WinUI 3 widget 骨架 + 数据层 + 预览条 / 展开面板 / 设置页。
+**v0.1.14**：WinUI 3 小组件已在本机 WidBar 1.2.8 里跑通 —— 任务栏预览条、展开面板、设置页
+都真实渲染，数据来自公开快照（28 款，真实抓取）。v1（内嵌 `gacha-calendar-core` 各端自抓）见
+[`docs/06-v1路线.md`](docs/06-v1路线.md)。
 
 | 能力 | 状态 |
 |---|---|
 | 数据层 `GachaCalendar.Core`（feed / 缓存 / 目录 / 可见性 / 行文案 / 失败三态） | ✅ 268 条断言 |
 | WidBar 插件契约接入（`com.widbar.widget` AppExtension / `plugin.json` / 单项目 MSIX） | ✅ 构建 + 注册 + 被发现 |
-| 任务栏预览条（1–3 条最近结束 + 短倒计时） | ✅ WidBar 内已渲染（SDK 日志 `Instance ready` / `content=252x47dip`） |
-| 展开面板（28 款六列：卡池 / 起止 / 活动 / 倒计时 / 失败三态） | ✅ 已预热（`Flyout prewarmed`），待人工点开确认 |
-| 设置页（显隐 / 排序 / 预览条数 / 刷新间隔 / 数据源 / 数据检查） | ✅ 已实现，待人工点开确认 |
+| 任务栏预览条（1–3 条最近结束 + 短倒计时） | ✅ 已实拍（`docs/images/preview.png`） |
+| 展开面板（23 款可见 / 六列 / 失败三态 / 悬停明细） | ✅ 已实拍（`docs/images/flyout.png`） |
+| 设置页（显隐 / 排序 / 预览条数 / 刷新间隔 / 数据源 / 数据检查） | ✅ 已实拍（`docs/images/settings.png`） |
 | 数据源：静态快照 JSON（`gacha-calendar-app` CI，每 6h） | ✅ 已抓到真实数据（28 款，缓存落盘） |
 | 宿主联调（WidBar 1.2.8 拉起进程并连上管道） | ✅ 签名安装后跑通（见 docs/03 §7） |
 | 商店图标素材（44 / 48 / 50 / 71 / 150 / 310 / 620） | ✅ `tools/make-icons.py` 生成 |
@@ -41,6 +43,16 @@
 - ✅ 进程令牌 `Medium`、`isAppContainer=false`，`plugin-health` 0 失败。
 - 关键前置：**必须用 `tools/install-signed.ps1` 正式签名安装**；松散注册（`-Register`）的未签名包会被
   WidBar 的 `PipeOptions.CurrentUserOnly` 管道拒绝（Low IL）。细节见 [`docs/03`](docs/03-WidBar插件契约.md) §7。
+
+## 界面
+
+| 任务栏预览条 | 展开面板 |
+|---|---|
+| ![任务栏预览条](docs/images/preview.png) | ![展开面板](docs/images/flyout.png) |
+
+![设置页](docs/images/settings.png)
+
+> 以上为 Windows 11（150% 缩放）实机截图，数据为真实抓取。
 
 
 ## 数据从哪来

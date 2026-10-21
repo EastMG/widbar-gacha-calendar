@@ -2,6 +2,20 @@
 
 格式：每条一行，版本号与 `src/GachaWidget/GachaWidget.csproj` 的 `<Version>` 对应。
 
+## v0.1.14（2026-10-21）
+
+- refactor: 抽出 `IFeedProvider` 数据源接口（`FeedClient` 为其 v0 实现），插件只依赖接口 ——
+  v1 换成"内嵌 gacha-calendar-core 的 EngineFeedProvider"时 UI/视图模型零改动。
+- docs: 新增 [`docs/06-v1路线.md`](docs/06-v1路线.md)：引擎选型（WebView2 优先）、transport/storage 注入、
+  分阶段任务与验收标准。
+
+## v0.1.13（2026-10-21）
+
+- fix: 预览宽度按实际 chip 数重算（124dip/条），初始化后 `RequestPreviewRefresh()` 让宿主重排，
+  解决 3 条只显示 1.5 条被裁掉的问题；`WidBarPluginPreviewWidth` 同步为 384。
+- fix: 面板列宽重排（150/175/125/175/*），活动起止不再被挤成两行；右上角给设置齿轮留 46dip。
+- docs: 实拍三张界面截图进 `docs/images/`（150% 缩放下用 PrintWindow + PMv2 DPI 捕获）。
+
 ## v0.1.12（2026-10-21）
 
 - feat: 商店图标素材（`tools/make-icons.py` → 44/48/50/71/150/310/620），替换占位图。
