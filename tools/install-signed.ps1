@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     构建并安装「签名版」MSIX（开发期联调用；松散注册 -Register 的包在部分机器上连不上宿主管道）。
 
@@ -62,6 +62,9 @@ $env:TMP = $env:TEMP
 New-Item -ItemType Directory -Force -Path $env:TEMP | Out-Null
 $env:DOTNET_CLI_HOME = Join-Path (Split-Path -Parent $repo) '.dotnet-home'
 $env:NUGET_PACKAGES = Join-Path (Split-Path -Parent $repo) '.nuget-packages'
+
+# 构建前结束残留的 widget 进程：否则 apphost.exe 复制会报 MSB3027（文件被锁定）
+Get-Process GachaWidget -ErrorAction SilentlyContinue | Stop-Process -Force
 
 Write-Host "==> 构建 MSIX" -ForegroundColor Cyan
 & dotnet build $proj -c Release -p:Platform=x64 `
@@ -129,7 +132,7 @@ if (-not $signtool) { throw '找不到 signtool.exe（Windows SDK BuildTools 未
 Write-Host '==> 签名' -ForegroundColor Cyan
 $signed = $msix.FullName -replace '\.msix$', '.signed.msix'
 Copy-Item $msix.FullName $signed -Force
-& $signtool.FullName sign /fd SHA256 /f $pfx /p $pfxPwdPlain /td SHA256 $signed
+& $signtool.FullName sign /fd SHA256 /f $pfx /p $pfxPwdPlain /tr 'http://timestamp.digicert.com' /td SHA256 $signed
 if ($LASTEXITCODE -ne 0) { throw "signtool 失败（exit=$LASTEXITCODE）。若是 0x80090010 / Store::ImportCertObject，说明当前会话被限制了 CryptoAPI，请在普通终端重试。" }
 
 if ($SkipInstall) {

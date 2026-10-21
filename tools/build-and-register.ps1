@@ -131,6 +131,10 @@ if ($Clean) {
 # 3. 构建
 # ---------------------------------------------------------------------------
 Write-Step "dotnet build $ProjectPath"
+
+# 构建前结束残留的 widget 进程：否则 apphost.exe 复制会报 MSB3027（文件被锁定）
+Get-Process GachaWidget -ErrorAction SilentlyContinue | Stop-Process -Force
+
 $buildArgs = @('build', $ProjectPath, '-c', $Configuration, ('-p:Platform=' + $Platform), '-nologo', '-v:minimal')
 Write-Info ('dotnet ' + ($buildArgs -join ' '))
 $sw = [Diagnostics.Stopwatch]::StartNew()

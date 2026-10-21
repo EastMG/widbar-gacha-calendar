@@ -19,6 +19,7 @@ public static class Program
 	private static void Main(string[] args)
 	{
 		Log($"Main entered; args=[{string.Join(" ", args)}]");
+		Log("token: " + Diagnostics.TokenInfo.Describe());
 
 		AppDomain.CurrentDomain.UnhandledException += (_, e) =>
 			Log("UNHANDLED(AppDomain): " + e.ExceptionObject);
