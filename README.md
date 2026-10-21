@@ -121,3 +121,10 @@ docs/                       架构 / 数据契约 / WidBar 契约 / 上架清单
 MIT © 2026 EastMG
 
 [![](https://img.shields.io/badge/powered_by-dsh-4D6BFE.svg?logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
+
+## 发布
+
+- CI（GitHub Actions）：push 到 `main` 自动跑 Core 单测 + widget 构建 + 用 **VS MSBuild** 出 `.msixupload`，
+  产物在 Actions 运行的 `msix` artifact 里。
+- 商店：Partner Center 上传该 `.msixupload`；`Package.appxmanifest` 的 Publisher 需与 Partner Center 身份一致。
+- 开发期联调：`tools\install-signed.ps1`（自签证书 + 正式安装；松散注册的包会被 WidBar 管道拒绝）。

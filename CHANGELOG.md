@@ -2,6 +2,18 @@
 
 格式：每条一行，版本号与 `src/GachaWidget/GachaWidget.csproj` 的 `<Version>` 对应。
 
+## v0.1.16（2026-10-21）
+
+- fix: 预览 chip 宽度收紧到 120dip（游戏名 62dip 截断），3 条正好 372dip；metadata 同步 372。
+- test: 补「状态变更通知」单测（Apply Sample→Fresh→Cached 必须发 PropertyChanged），共 276 断言。
+- ci: 推送到 GitHub 后 CI 用 VS MSBuild 出 `.msixupload`（dotnet CLI 会因 System.Security.Permissions 崩溃）。
+
+## v0.1.15（2026-10-21）
+
+- fix: 预览条「示例 / 缓存」标记跟随数据状态刷新 —— 根因是 `WidgetViewModel.Apply` 直接改字段
+  没有发 `PropertyChanged`（Status/IsSample/IsCached），外壳绑定永远停在首帧状态。
+- fix: 预览创建完成后再 `RequestPreviewRefresh()`（初始化阶段的请求发生在窗口创建前，宿主会忽略）。
+
 ## v0.1.14（2026-10-21）
 
 - refactor: 抽出 `IFeedProvider` 数据源接口（`FeedClient` 为其 v0 实现），插件只依赖接口 ——
