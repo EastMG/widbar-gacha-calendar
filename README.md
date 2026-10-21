@@ -1,4 +1,4 @@
-# widbar-gacha-calendar
+﻿# widbar-gacha-calendar
 
 [![license](https://img.shields.io/github/license/EastMG/widbar-gacha-calendar.svg)](./LICENSE)
 ![Windows 11](https://img.shields.io/badge/Windows-11-0078D4?logo=windows11&logoColor=white)
@@ -23,11 +23,11 @@
 |---|---|
 | 数据层 `GachaCalendar.Core`（feed / 缓存 / 目录 / 可见性 / 行文案 / 失败三态） | ✅ 268 条断言 |
 | WidBar 插件契约接入（`com.widbar.widget` AppExtension / `plugin.json` / 单项目 MSIX） | ✅ 构建 + 注册 + 被发现 |
-| 任务栏预览条（1–3 条最近结束 + 短倒计时） | ✅ 代码完成，待宿主联调 |
-| 展开面板（28 款六列：卡池 / 起止 / 活动 / 倒计时 / 失败三态） | ✅ 代码完成，待宿主联调 |
-| 设置页（显隐 / 排序 / 预览条数 / 刷新间隔 / 数据源 / 数据检查） | ✅ 代码完成，待宿主联调 |
+| 任务栏预览条（1–3 条最近结束 + 短倒计时） | ✅ WidBar 内已渲染（SDK 日志 `Instance ready` / `content=252x47dip`） |
+| 展开面板（28 款六列：卡池 / 起止 / 活动 / 倒计时 / 失败三态） | ✅ 已预热（`Flyout prewarmed`），待人工点开确认 |
+| 设置页（显隐 / 排序 / 预览条数 / 刷新间隔 / 数据源 / 数据检查） | ✅ 已实现，待人工点开确认 |
 | 数据源：静态快照 JSON（`gacha-calendar-app` CI，每 6h） | ✅ |
-| 宿主联调（WidBar 1.2.8 拉起进程并连上管道） | ⛔ 见下「本机联调现状」 |
+| 宿主联调（WidBar 1.2.8 拉起进程并连上管道） | ✅ 签名安装后跑通（见 docs/03 §7） |
 | 数据源：内嵌 `gacha-calendar-core` 各端自行抓取（v1） | 📋 |
 | 上架微软商店 + 进 WidBar 组件目录 | 📋 |
 

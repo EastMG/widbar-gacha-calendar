@@ -18,7 +18,7 @@ namespace GachaWidget.Plugin;
 /// </summary>
 public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IWidgetFlyoutLifecycle
 {
-	private const string PluginVersion = "0.1.9";
+	private const string PluginVersion = "0.1.10";
 	private const string PluginId = "com.eastmg.gachacalendar";
 	private const string PluginName = "二游日历";
 
@@ -66,6 +66,7 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 	{
 		Program.Log($"InitializeAsync begin; previewVisible={context.IsPreviewVisible}; dataDir={context.DataDirectory}");
 		_context = context;
+		GachaWidget.Diagnostics.PluginLog.Initialize(context.DataDirectory);
 		_queue = DispatcherQueue.GetForCurrentThread();
 		_catalogStore = new CatalogStore();
 		_vm = new WidgetViewModel(_catalogStore.Catalog);
@@ -74,6 +75,10 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 		_cts = new CancellationTokenSource();
 		_previewVisible = context.IsPreviewVisible;
 		context.PreviewVisibilityChanged += OnPreviewVisibilityChanged;
+		GachaWidget.Diagnostics.PluginLog.Write(
+			$"Init v{PluginVersion}: catalog={_catalogStore.Catalog.Count}; feedUrl={_settings.FeedUrl}; " +
+			$"previewItems={_settings.PreviewItems}; autoRefresh={_settings.AutoRefresh}/{_settings.RefreshMinutes}min; " +
+			$"previewVisible={context.IsPreviewVisible}");
 
 		// 首帧必须立刻有内容：本地缓存 → 内置示例，任何情况下都不等网络。
 		try
@@ -82,21 +87,26 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 			{
 				_vm.Apply(cached, _settings, DateTime.Now, FeedStatus.Cached);
 				_lastSuccessUtc = ToUtc(cached.RefreshedAt);
+				GachaWidget.Diagnostics.PluginLog.Write($"first frame: cache, records={cached.Games.Count}");
 			}
 			else if (EmbeddedData.TrySampleFeed(out var sampleJson, out _)
 				&& FeedDocument.Parse(sampleJson) is { } sample)
 			{
 				_vm.Apply(sample, _settings, DateTime.Now, FeedStatus.Sample);
+				GachaWidget.Diagnostics.PluginLog.Write($"first frame: sample, records={sample.Games.Count}");
 			}
 			else
 			{
 				_vm.ShowError("没有可用数据：缓存与内置示例都读取失败。");
+				GachaWidget.Diagnostics.PluginLog.Write("first frame: NO DATA");
 			}
 		}
 		catch (Exception ex)
 		{
 			_vm.ShowError("初始化失败：" + ex.Message);
+			GachaWidget.Diagnostics.PluginLog.Write("first frame exception: " + ex);
 		}
+		GachaWidget.Diagnostics.PluginLog.Write($"rows={_vm.Rows.Count}; chips={_vm.Chips.Count}; status={_vm.StatusText}");
 
 		StartTickTimer();
 
@@ -110,7 +120,7 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 
 	public override Microsoft.UI.Xaml.UIElement? CreatePreviewContent()
 	{
-		Program.Log($"CreatePreviewContent; vm={(_vm is null ? "null" : "ok")}; chips={_vm?.Chips.Count}");
+		GachaWidget.Diagnostics.PluginLog.Write($"CreatePreviewContent; chips={_vm?.Chips.Count}; width={PreviewLogicalWidth}");
 		if (_vm is null) return null;
 		_preview = new PreviewView(_vm);
 		return _preview;
@@ -118,7 +128,7 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 
 	public override Microsoft.UI.Xaml.UIElement CreateFlyoutContent()
 	{
-		Program.Log("CreateFlyoutContent");
+		GachaWidget.Diagnostics.PluginLog.Write($"CreateFlyoutContent; rows={_vm?.Rows.Count}");
 		_flyout = new FlyoutView(_vm ?? throw new InvalidOperationException("InitializeAsync 尚未完成"));
 		_flyout.RefreshRequested += (_, _) => _ = RefreshAsync(force: true);
 		return _flyout;
@@ -128,6 +138,7 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 	{
 		if (_vm is null || _catalogStore is null) return null;
 
+		GachaWidget.Diagnostics.PluginLog.Write("CreateSettingsContent");
 		var view = new SettingsView(_settings, _catalogStore.Catalog, CheckFeedAsync);
 		view.Changed += settings =>
 		{
@@ -259,7 +270,10 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 		{
 			_flyout?.SetRefreshing(true);
 			var token = _cts?.Token ?? CancellationToken.None;
+			var started = DateTime.UtcNow;
+			GachaWidget.Diagnostics.PluginLog.Write($"refresh start: {_settings.FeedUrl} (force={force})");
 			var result = await _feedClient.FetchAsync(_settings.FeedUrl, token);
+			var elapsed = (int)(DateTime.UtcNow - started).TotalMilliseconds;
 
 			var beforeCount = _vm.Chips.Count;
 			_vm.Apply(result, _settings, DateTime.Now);
@@ -267,6 +281,10 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 			{
 				_lastSuccessUtc = DateTime.UtcNow;
 			}
+
+			GachaWidget.Diagnostics.PluginLog.Write(
+				$"refresh done: status={result.Status}; ok={result.Ok}; error={result.Error ?? "-"}; " +
+				$"records={result.Document?.Games.Count ?? 0}; {elapsed}ms; chips={_vm.Chips.Count}; statusText={_vm.StatusText}");
 
 			// chip 数可能变了（预览宽度跟着变），请求宿主重排一次。
 			if (_vm.Chips.Count != beforeCount) _context.RequestPreviewRefresh();
@@ -278,6 +296,7 @@ public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlu
 		}
 		catch (Exception ex)
 		{
+			GachaWidget.Diagnostics.PluginLog.Write("refresh exception: " + ex);
 			_vm?.ShowError("刷新失败：" + ex.Message);
 			_context?.RequestPreviewRefresh();
 		}

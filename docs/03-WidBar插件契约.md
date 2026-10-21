@@ -121,44 +121,58 @@ Add-AppxPackage -Register <layout>\AppxManifest.xml
   代价是包体（msix 33MB / layout 96MB），已用"只引 WinUI 子包 + 剔除 AI/ML"压到可接受范围
   （裁剪前后 85.3MB → 32.7MB，见 `_widbar_spike/REPORT.md §10`）。
 
-## 7. 本机联调现状与阻塞点（2026-10-21 实测）
+## 7. 本机联调记录（2026-10-21，已跑通）
 
-**能用**：构建 → 注册 → WidBar 发现。
-WidBar 日志证据：
+### 7.1 结论
 
-```
-TRACE [PluginLoader] AppExtension found: 'gacha-calendar' from ...\win-x64\Public
-TRACE [PluginLoader] Discovered 'com.eastmg.gachacalendar' v0.1.4 from ...
-```
-
-WidBar 还生成了 `LocalState\PluginIcons\EastMG_GachaCalendar_8c3jes7x0pqng_gacha-calendar_0.1.4.0.png`。
-
-**不能用**：宿主拉起 widget 进程后，进程连不上宿主管道：
+**签名安装（Developer）+ 0.1.9 起，widget 已在 WidBar 1.2.8 里跑起来。**
+决定性证据来自 SDK 自己的日志
+`%LOCALAPPDATA%\Packages\EastMG.GachaCalendar_8c3jes7x0pqng\LocalState\Logs\widbar-sdk.*.log`：
 
 ```
-[PluginProcess] Activated 'EastMG.GachaCalendar_8c3jes7x0pqng!App' (pid ...)
-[PluginProcess] 'com.eastmg.gachacalendar' faulted: Plugin process exited.
+OnLaunched, pipe='widbar.com.eastmg.gachacalendar.c327…'
+Pipe connected.
+Hello sent for 'com.eastmg.gachacalendar'.
+initInstance '648ce38d…'.
+Initializing plugin for '648ce38d…'.
+Plugin initialized for '648ce38d…'.
+Creating preview content for '648ce38d…'.
+Preview content created for '648ce38d…'.
+DirectPreview: created hwnd=0x4D0D88 parent=0x30054
+Instance '648ce38d…' ready (width=344).
+DirectPreview: layout win=378x72px dpi=144 rasterScale=1.5 content=252x47dip
+Flyout prewarmed for '648ce38d…'.
 ```
 
-进程内（`startup.log`，本项目加的启动诊断）定位到：
+`plugin-health.json` 里 `com.eastmg.gachacalendar@0.1.9` 为 0 失败、未禁用；进程常驻、`Responding=True`。
 
-```
-pipe probe FAILED: widbar.com.eastmg.gachacalendar.<guid>:
-  UnauthorizedAccessException: Access to the path is denied.
-```
+### 7.2 两个真实坑（都修了）
 
-即 `NamedPipeClientStream.Connect` 被 ACL 拒绝，SDK 随后退出。
-**同一会话里官方 Store 组件（systemmetrics / weather）状态是 `-> Running`**，
-同时用官方模板 `dotnet new widbar-widget` 生成的最小 widget（松散注册）也一样失败 ——
-所以这不是本项目代码的问题，而是**松散注册的开发包在 WidBar 1.2.8 上连不上宿主管道**。
+1. **开发包（松散注册、未签名）连不上宿主**
+   - 症状：`UnauthorizedAccessException: Access to the path is denied`，WidBar 侧 `Plugin process exited`；
+     官方 Store 组件同时正常。
+   - 根因：宿主管道用 `PipeOptions.CurrentUserOnly`（见反编译 `PluginProcessClient.StartAsync`）；
+     未签名开发包被激活成 **Low IL** 进程（实测 `S-1-16-4096`），写不到 Medium 的管道对象。
+   - 修法：**签名安装**。`SignatureKind: None → Developer` 后进程恢复 Medium，连接成功。
+     开发流程因此改为 `tools\install-signed.ps1`（管理员一次导入证书，之后不需要）。
 
-**下一步（需要普通桌面终端 / 用户操作）**：用"签名 + 正式安装"验证是否为签名/部署形态导致：
+2. **自己加的启动探针会抢占单实例管道**（0.1.8 及以前）
+   - 症状：签名后变成 `Pipe disconnected`，SDK 日志只有 `OnLaunched`、没有 `Pipe connected.`。
+   - 根因：排障时在 `Program.Main` 里加过"先自己连一次管道"的探针；它和 SDK 抢**同一个单实例**管道，
+     连上又立刻断开，宿主与 SDK 都握不上手。
+   - 修法：0.1.9 删除该探针。**教训：不要替 SDK 预先连接宿主通道。**
 
-```powershell
-# 普通终端（不要 DSH 会话；Low IL 下 CryptoAPI 受限，signtool 会报 0x80090010）
-powershell -NoProfile -ExecutionPolicy Bypass -File tools\install-signed.ps1
-```
+### 7.3 现在怎么排障
 
-首次需要管理员把自签证书（`CN=EastMG`）导入 `LocalMachine\TrustedPeople`；之后重复步骤即可。
-若签名安装后仍是 `pipe probe FAILED`，就是宿主对第三方组件的支持问题，需向 WidBar 反馈（Discord）。
+- 运行期诊断：`DataDirectory\widget.log`（宿主给的目录，通常
+  `%LOCALAPPDATA%\Packages\30113AndreaDelBello.WidBar-WidgetTaskbarsystem_2mj5svk4jk01m\LocalCache\Roaming\WidBar\Data\com.eastmg.gachacalendar\<instance>\widget.log`）
+  记录初始化、首帧来源、每次刷新结果（status/error/耗时/条数）。
+- SDK 日志：`%LOCALAPPDATA%\Packages\EastMG.GachaCalendar_8c3jes7x0pqng\LocalState\Logs\widbar-sdk.*.log`
+- 宿主日志：`…WidBar…\LocalState\Logs\widbar.log`
+
+### 7.4 待确认
+
+- 数据抓取：当前实例的 DataDirectory 里**还没有 `feed.json`**（只有 `{}` 的设置），
+  说明首帧是内置示例或刷新尚未成功。0.1.10 起会写 `widget.log` 把刷新结果落盘，用来定位
+  （可能是这台机器的 DNS/代理对 `eastmg.github.io` 不稳；宿主自己的 Showcase 拉取也报过"不知道这样的主机"）。
 
