@@ -1,4 +1,4 @@
-using GachaCalendar.Core.Models;
+﻿using GachaCalendar.Core.Models;
 using GachaCalendar.Core.Services;
 using GachaCalendar.Core.ViewModels;
 using GachaWidget.Views;
@@ -18,12 +18,12 @@ namespace GachaWidget.Plugin;
 /// </summary>
 public sealed class GachaWidgetPlugin : WidgetPluginBase, IConfigurableWidgetPlugin, IWidgetFlyoutLifecycle
 {
-	private const string PluginVersion = "0.1.15";
+	private const string PluginVersion = "0.1.16";
 	private const string PluginId = "com.eastmg.gachacalendar";
 	private const string PluginName = "二游日历";
 
 	/// <summary>每个 chip 预留的逻辑宽度（含间距）；预览条总宽由当前 chip 数决定。</summary>
-	private const int ChipWidth = 124;
+	private const int ChipWidth = 120;
 
 	/// <summary>预览条左右内边距（与 PreviewView 的 Padding 一致）。</summary>
 	private const int PreviewPadding = 12;

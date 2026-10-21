@@ -34,6 +34,7 @@ internal static class Program
 			TestRowBuilder();
 			TestVisibility();
 			TestStatus();
+			TestStatusNotifications();
 			TestChips();
 			TestTick();
 			TestSettings();
@@ -593,6 +594,36 @@ internal static class Program
 
 		vm.Apply(new FeedDocument(), new WidgetSettings(), catalog, Now);
 		Eq("无失败无记录时提示语", "所有可见条目都抓到了当期内容", vm.StatusTip);
+	}
+
+	/// <summary>
+	/// 预览条的「示例 / 缓存」标记依赖 VM 的变更通知；这里锁住 Apply 时 Status/IsSample/IsCached
+	/// 必须真的发 PropertyChanged（0.1.14 之前直接改字段没通知，导致刷新成功后标记不消失）。
+	/// </summary>
+	private static void TestStatusNotifications()
+	{
+		Section("状态变更通知（示例/缓存标记）");
+		var catalog = MakeCatalog(("g1", "游戏1", false));
+		var feed = MakeFeed(("g1", Rec(banner: "池1")));
+		var vm = new WidgetViewModel();
+		var changed = new List<string>();
+		vm.PropertyChanged += (_, e) => changed.Add(e.PropertyName ?? "");
+
+		vm.Apply(feed, new WidgetSettings(), catalog, Now, FeedStatus.Sample);
+		True("示例状态通知 IsSample", changed.Contains(nameof(WidgetViewModel.IsSample)));
+		True("示例状态通知 Status", changed.Contains(nameof(WidgetViewModel.Status)));
+		True("示例状态下 IsSample=true", vm.IsSample);
+
+		changed.Clear();
+		vm.Apply(feed, new WidgetSettings(), catalog, Now, FeedStatus.Fresh);
+		True("刷新成功通知 IsSample", changed.Contains(nameof(WidgetViewModel.IsSample)));
+		False("刷新成功后 IsSample=false", vm.IsSample);
+		False("刷新成功后 IsCached=false", vm.IsCached);
+
+		changed.Clear();
+		vm.Apply(feed, new WidgetSettings(), catalog, Now, FeedStatus.Cached);
+		True("缓存状态通知 IsCached", changed.Contains(nameof(WidgetViewModel.IsCached)));
+		True("缓存状态下 IsCached=true", vm.IsCached);
 	}
 
 	// ================================================================ 11. chips

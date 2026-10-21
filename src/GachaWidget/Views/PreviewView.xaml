@@ -63,7 +63,7 @@
                                 VerticalAlignment="Center" />
                             <TextBlock
                                 VerticalAlignment="Center"
-                                MaxWidth="76"
+                                MaxWidth="62"
                                 FontSize="12"
                                 Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                 Text="{x:Bind GameName}"
