@@ -170,9 +170,26 @@ Flyout prewarmed for '648ce38d…'.
 - SDK 日志：`%LOCALAPPDATA%\Packages\EastMG.GachaCalendar_8c3jes7x0pqng\LocalState\Logs\widbar-sdk.*.log`
 - 宿主日志：`…WidBar…\LocalState\Logs\widbar.log`
 
-### 7.4 待确认
+### 7.4 数据源：已验证抓到真实数据
 
-- 数据抓取：当前实例的 DataDirectory 里**还没有 `feed.json`**（只有 `{}` 的设置），
-  说明首帧是内置示例或刷新尚未成功。0.1.10 起会写 `widget.log` 把刷新结果落盘，用来定位
-  （可能是这台机器的 DNS/代理对 `eastmg.github.io` 不稳；宿主自己的 Showcase 拉取也报过"不知道这样的主机"）。
+- widget 进程令牌：`integrity=S-1-16-8192`（Medium）、`isAppContainer=false` —— 签名安装后不再被降级。
+- 首帧与刷新链路正常，`startup.log` 里可见：
+  `InitializeAsync end` → `CreatePreviewContent; chips=3` → `CreateFlyoutContent`。
+- **真实 feed 已缓存**（28 款、`refreshedAt` 为当天、`原神` 的 UP 角色是真实数据）：
+  `%LOCALAPPDATA%\Packages\EastMG.GachaCalendar_8c3jes7x0pqng\LocalCache\Roaming\WidBar\Data\com.eastmg.gachacalendar\<instance>\feed.json`
+- 为什么"宿主侧"的数据目录看起来是空的：宿主给的 DataDirectory 是
+  `%APPDATA%\WidBar\Data\…`，而打包进程写 `%APPDATA%` 会被 AppModel **重定向**到自己包的
+  `LocalCache\Roaming`。宿主与 widget 各自看到自己那份，这是**正常隔离，不是 bug**。
+  （0.1.11 起 `RuntimePaths` 会显式探测可写目录并记录选择结果，避免下次再误判。）
+- 网络本身没问题：`tools/FeedProbe` 用与 widget 完全相同的 `FeedClient` 抓真实 URL，
+  实测 `Fresh`、28 条、约 1.2s，并写出 `feed.json/feed.etag/feed.lastmod`。
+
+### 7.5 排障工具
+
+| 工具 | 用途 |
+|---|---|
+| `tools/FeedProbe` | `dotnet run --project tools\FeedProbe -- <url> <cacheDir>`：单独验证数据源可达性（区分网络问题 vs widget 环境问题） |
+| `tools/smoke-host-pipe.ps1` | 假宿主握手回归（需普通终端；DSH 会话里子进程会被降成 Low IL，连不上 CurrentUserOnly 管道） |
+| `DataDirectory\widget.log`（0.1.10+） | 初始化、首帧来源、每次刷新的 status/error/耗时/条数 |
+| `…\EastMG.GachaCalendar_8c3jes7x0pqng\LocalState\Logs\widbar-sdk.*.log` | SDK 侧握手与 preview 创建过程 |
 

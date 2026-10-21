@@ -1,4 +1,4 @@
-﻿# widbar-gacha-calendar
+# widbar-gacha-calendar
 
 [![license](https://img.shields.io/github/license/EastMG/widbar-gacha-calendar.svg)](./LICENSE)
 ![Windows 11](https://img.shields.io/badge/Windows-11-0078D4?logo=windows11&logoColor=white)
@@ -26,20 +26,21 @@
 | 任务栏预览条（1–3 条最近结束 + 短倒计时） | ✅ WidBar 内已渲染（SDK 日志 `Instance ready` / `content=252x47dip`） |
 | 展开面板（28 款六列：卡池 / 起止 / 活动 / 倒计时 / 失败三态） | ✅ 已预热（`Flyout prewarmed`），待人工点开确认 |
 | 设置页（显隐 / 排序 / 预览条数 / 刷新间隔 / 数据源 / 数据检查） | ✅ 已实现，待人工点开确认 |
-| 数据源：静态快照 JSON（`gacha-calendar-app` CI，每 6h） | ✅ |
+| 数据源：静态快照 JSON（`gacha-calendar-app` CI，每 6h） | ✅ 已抓到真实数据（28 款，缓存落盘） |
 | 宿主联调（WidBar 1.2.8 拉起进程并连上管道） | ✅ 签名安装后跑通（见 docs/03 §7） |
+| 商店图标素材（44 / 48 / 50 / 71 / 150 / 310 / 620） | ✅ `tools/make-icons.py` 生成 |
 | 数据源：内嵌 `gacha-calendar-core` 各端自行抓取（v1） | 📋 |
 | 上架微软商店 + 进 WidBar 组件目录 | 📋 |
 
-### 本机联调现状（2026-10-21）
+### 本机联调现状（2026-10-21，已跑通）
 
-- ✅ 构建 → 注册 → **WidBar 能发现**：日志 `Discovered 'com.eastmg.gachacalendar' v0.1.4`，并生成了插件图标。
-- ⛔ 宿主拉起 widget 进程后，进程连宿主管道被 ACL 拒绝（`UnauthorizedAccessException`），
-  SDK 退出 → WidBar 显示 `Plugin process exited`。
-- 同一会话官方 Store 组件正常（`-> Running`）；官方模板生成的最小 widget 松散注册后也一样失败
-  → 怀疑是**松散注册的开发包**在 WidBar 1.2.8 上的限制，不是本项目代码问题。
-- 下一步：在**普通桌面终端**跑 `tools\install-signed.ps1`（签名 + 正式安装）验证；
-  细节与证据见 [`docs/03`](docs/03-WidBar插件契约.md) §7、[`docs/05`](docs/05-验收清单.md) §D。
+- ✅ 构建 → 签名安装 → WidBar 发现 → **握手成功**：SDK 日志 `Pipe connected` → `Hello sent` → `Plugin initialized`
+  → `Creating preview content` → `Instance ready (width=344)`、`content=252x47dip`、`Flyout prewarmed`。
+- ✅ 数据链路真实可用：缓存里 **28 款、当天抓取**的 feed（`原神` 的 UP 角色等均为真实数据）；
+  独立探针 `tools/FeedProbe` 复测 `Fresh`、28 条、约 1.2s。
+- ✅ 进程令牌 `Medium`、`isAppContainer=false`，`plugin-health` 0 失败。
+- 关键前置：**必须用 `tools/install-signed.ps1` 正式签名安装**；松散注册（`-Register`）的未签名包会被
+  WidBar 的 `PipeOptions.CurrentUserOnly` 管道拒绝（Low IL）。细节见 [`docs/03`](docs/03-WidBar插件契约.md) §7。
 
 
 ## 数据从哪来
