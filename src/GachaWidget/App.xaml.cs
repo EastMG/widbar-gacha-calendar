@@ -1,4 +1,4 @@
-using GachaCalendar.Core.Models;
+﻿using GachaCalendar.Core.Models;
 using GachaCalendar.Core.Services;
 using GachaCalendar.Core.ViewModels;
 using GachaWidget.Design;
@@ -33,13 +33,22 @@ public partial class App : WidgetHostApplication
 			.FirstOrDefault(a => a.StartsWith("--ui-preview", StringComparison.OrdinalIgnoreCase));
 		if (previewArg is not null)
 		{
-			ShowDesignPreview(ParseKind(previewArg));
+			ShowDesignPreview(ParseKind(previewArg), ParseTheme());
 			return;
 		}
 
 		Program.Log("OnLaunched");
 		base.OnLaunched(args);
 		Program.Log("OnLaunched returned");
+	}
+
+	private static string ParseTheme()
+	{
+		var arg = Environment.GetCommandLineArgs()
+			.FirstOrDefault(a => a.StartsWith("--theme=", StringComparison.OrdinalIgnoreCase));
+		if (arg is null) return "dark";
+		var value = arg[(arg.IndexOf('=') + 1)..].Trim().ToLowerInvariant();
+		return value is "light" or "dark" ? value : "dark";
 	}
 
 	private static string ParseKind(string arg)
@@ -49,7 +58,7 @@ public partial class App : WidgetHostApplication
 		return kind is "preview" or "settings" or "flyout" ? kind : "flyout";
 	}
 
-	private void ShowDesignPreview(string kind)
+	private void ShowDesignPreview(string kind, string theme)
 	{
 		try
 		{
@@ -64,7 +73,7 @@ public partial class App : WidgetHostApplication
 				vm.Apply(feed, settings, catalog, DateTime.Now, FeedStatus.Sample);
 			}
 
-			_designWindow = new DesignPreviewWindow(kind, vm, settings, catalog);
+			_designWindow = new DesignPreviewWindow(kind, theme, vm, settings, catalog);
 			_designWindow.Activate();
 			Program.Log("design preview activated: " + kind);
 		}

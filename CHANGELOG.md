@@ -1,6 +1,12 @@
-# 变更记录
+﻿# 变更记录
 
 格式：每条一行，版本号与 `src/GachaWidget/GachaWidget.csproj` 的 `<Version>` 对应。
+
+## v0.1.19（2026-10-21）
+
+- feat: 设计 harness 支持 `--theme=light|dark`，并实拍浅色主题三张截图（`docs/images/design-*-light.png`），
+  验证 ThemeResource 在浅色下同样成立（用户 WidBar 配置为浅色）。
+- docs: README 补充浅色截图与 harness 用法。
 
 ## v0.1.18（2026-10-21）
 

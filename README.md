@@ -1,4 +1,4 @@
-# widbar-gacha-calendar
+﻿# widbar-gacha-calendar
 
 [![build](https://github.com/EastMG/widbar-gacha-calendar/actions/workflows/build.yml/badge.svg)](https://github.com/EastMG/widbar-gacha-calendar/actions/workflows/build.yml)
 [![license](https://img.shields.io/github/license/EastMG/widbar-gacha-calendar.svg)](./LICENSE)
@@ -58,12 +58,14 @@ WinUI 3 Fluent 规范（主题资源、8px 网格、卡片、克制的分隔线�
 
 > 以上由 `GachaWidget.exe --ui-preview=preview|flyout|settings` 按真实尺寸渲染后截图
 > （深色主题、150% 缩放、内置示例数据）；WidBar 里会自动跟随系统深浅色。
+> 浅色主题截图见 `docs/images/design-*-light.png`（`--theme=light`）。
 
 ### 设计冒烟（不装 WidBar 也能看效果）
 
 ```powershell
 # 构建后按真实尺寸打开对应界面，直接截窗口即可
 .\src\GachaWidget\bin\x64\Release\net10.0-windows10.0.19041.0\win-x64\GachaWidget.exe --ui-preview=flyout
+# 可选：--theme=light / --theme=dark（默认 dark）
 ```
 
 - `preview`（372dip 预览条）、`flyout`（830×580 面板）、`settings`（900×940 设置页）三种；

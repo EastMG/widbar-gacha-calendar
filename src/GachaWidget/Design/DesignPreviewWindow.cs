@@ -19,14 +19,14 @@ public sealed class DesignPreviewWindow : Window
 {
 	private const double ScaleFallback = 1.5;
 
-	public DesignPreviewWindow(string kind, WidgetViewModel vm, WidgetSettings settings, GameCatalog catalog)
+	public DesignPreviewWindow(string kind, string theme, WidgetViewModel vm, WidgetSettings settings, GameCatalog catalog)
 	{
 		Title = "二游日历 设计预览 · " + kind;
 		var root = new Grid
 		{
-			Background = new SolidColorBrush(Color.FromArgb(255, 0x1A, 0x1A, 0x1A)),
+			Background = new SolidColorBrush(theme == "light" ? Color.FromArgb(255, 0xF3, 0xF3, 0xF3) : Color.FromArgb(255, 0x1A, 0x1A, 0x1A)),
 			Padding = new Thickness(10),
-			RequestedTheme = ElementTheme.Dark,
+			RequestedTheme = theme == "light" ? ElementTheme.Light : ElementTheme.Dark,
 		};
 
 		double dipWidth;
@@ -40,7 +40,7 @@ public sealed class DesignPreviewWindow : Window
 				{
 					Width = 372,
 					Height = 48,
-					Background = new SolidColorBrush(Color.FromArgb(255, 0x14, 0x14, 0x14)),
+					Background = new SolidColorBrush(theme == "light" ? Color.FromArgb(255, 0xF9, 0xF9, 0xF9) : Color.FromArgb(255, 0x14, 0x14, 0x14)),
 					CornerRadius = new CornerRadius(8),
 					Child = new PreviewView(vm) { VerticalAlignment = VerticalAlignment.Center },
 				};
@@ -55,7 +55,7 @@ public sealed class DesignPreviewWindow : Window
 				{
 					Width = 900,
 					Height = 940,
-					Background = new SolidColorBrush(Color.FromArgb(255, 0x2B, 0x2B, 0x2B)),
+					Background = new SolidColorBrush(theme == "light" ? Color.FromArgb(255, 0xFA, 0xFA, 0xFA) : Color.FromArgb(255, 0x2B, 0x2B, 0x2B)),
 					CornerRadius = new CornerRadius(8),
 					Child = new SettingsView(settings, catalog, _ => Task.FromResult("（设计预览：未真的联网）")),
 				};
@@ -70,7 +70,7 @@ public sealed class DesignPreviewWindow : Window
 				{
 					Width = 830,
 					Height = 580,
-					Background = new SolidColorBrush(Color.FromArgb(255, 0x2B, 0x2B, 0x2B)),
+					Background = new SolidColorBrush(theme == "light" ? Color.FromArgb(255, 0xFA, 0xFA, 0xFA) : Color.FromArgb(255, 0x2B, 0x2B, 0x2B)),
 					CornerRadius = new CornerRadius(8),
 					Child = new FlyoutView(vm),
 				};
