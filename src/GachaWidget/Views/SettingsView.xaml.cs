@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using GachaCalendar.Core.Models;
 using Microsoft.UI.Xaml;
@@ -58,7 +58,7 @@ public sealed partial class SettingsView : UserControl
 
 	private void Populate()
 	{
-		PreviewItemsBox.Value = _settings.PreviewItems;
+		BuildPreviewItems();
 		ShowGachaSwitch.IsOn = _settings.ShowGacha;
 		ShowEventSwitch.IsOn = _settings.ShowEvent;
 		AutoRefreshSwitch.IsOn = _settings.AutoRefresh;
@@ -85,6 +85,17 @@ public sealed partial class SettingsView : UserControl
 		{
 			return "0.1.0";
 		}
+	}
+
+	private void BuildPreviewItems()
+	{
+		PreviewItemsBox.Items.Clear();
+		for (var count = 1; count <= 3; count++)
+		{
+			PreviewItemsBox.Items.Add(new ComboBoxItem { Content = $"{count} 条", Tag = count });
+		}
+
+		PreviewItemsBox.SelectedIndex = Math.Clamp(_settings.PreviewItems, 1, 3) - 1;
 	}
 
 	private void BuildIntervalItems()
@@ -212,10 +223,11 @@ public sealed partial class SettingsView : UserControl
 
 	// ---------------------------------------------------------------- 事件
 
-	private void OnPreviewItemsChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+	private void OnPreviewItemsChanged(object sender, SelectionChangedEventArgs e)
 	{
-		if (_loading || double.IsNaN(args.NewValue)) return;
-		_settings.PreviewItems = (int)Math.Round(args.NewValue);
+		if (_loading) return;
+		if (PreviewItemsBox.SelectedIndex < 0) return;
+		_settings.PreviewItems = PreviewItemsBox.SelectedIndex + 1;
 		RaiseChanged();
 	}
 

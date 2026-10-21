@@ -2,6 +2,14 @@
 
 格式：每条一行，版本号与 `src/GachaWidget/GachaWidget.csproj` 的 `<Version>` 对应。
 
+## v0.1.21（2026-10-21）
+
+- fix: 设置页「任务栏预览条显示几条」从 NumberBox 换成 **ComboBox（1/2/3 条）**。
+  原因：WinUI NumberBox 的 `Compact` 模式在点右侧箭头时会弹出独立的数字滚动 Popup
+  （用户反馈"右上角这个数字滚动按钮怎么这么大"）；1–3 三选一本来就不需要步进器，
+  换成下拉后与「刷新间隔」一致，也不再有弹层。
+- docs: `docs/07-设置页设计.md` 记一条控件选型规则；设置页截图更新。
+
 ## v0.1.20（2026-10-21）
 
 - fix: 设置页对齐 **宿主 chrome 契约**（`SettingsHostWindow` 1120×820 / 滚动区 Padding 24,16,24,8）：

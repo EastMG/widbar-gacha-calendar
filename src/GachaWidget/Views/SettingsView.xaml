@@ -87,15 +87,15 @@
                                 <TextBlock Style="{StaticResource RowTitleTextStyle}" Text="任务栏预览条显示几条" />
                                 <TextBlock Style="{StaticResource RowDescTextStyle}" Text="1–3 条，按最近结束排序；更多内容点开面板看。" />
                             </StackPanel>
-                            <NumberBox
+                            <!-- 只有 1–3 三个值：用下拉，不用 NumberBox。
+                                 NumberBox 的 Compact 模式会弹出一个独立的大号滚动 Popup（用户反馈“按钮怎么这么大”），
+                                 三选一用 NumberBox 是多余交互，而且和下面的「刷新间隔」不一致。 -->
+                            <ComboBox
                                 x:Name="PreviewItemsBox"
                                 Grid.Column="1"
-                                Width="120"
+                                MinWidth="140"
                                 VerticalAlignment="Center"
-                                Maximum="3"
-                                Minimum="1"
-                                SpinButtonPlacementMode="Compact"
-                                ValueChanged="OnPreviewItemsChanged" />
+                                SelectionChanged="OnPreviewItemsChanged" />
                         </Grid>
                     </Border>
 
