@@ -1,4 +1,4 @@
-# 03 · WidBar 插件契约
+﻿# 03 · WidBar 插件契约
 
 基于 `WidBar.SDK 2.1.0`（本机 NuGet 包实测 dump，见 `_widbar_spike/api/WidBar.SDK.api.md`）与官方模板
 `andelby/widbar-widget-template`。**文档与 DLL 实际 API 已交叉核对。**
@@ -218,3 +218,17 @@ dotnet build src\GachaWidget\GachaWidget.csproj -c Release -p:Platform=x64
 - 注意：这是开发期入口，`App.OnLaunched` 里检测到参数就**不进** `base.OnLaunched`，
   因此不会创建宿主管道；打包进商店的包不受影响（正常启动无该参数）。
 
+### 7.8 设置页宿主 chrome 契约（1120×820）
+
+`WidBar.SDK.Hosting.SettingsHostWindow`（反编译冻结值）已经提供：
+
+| 项 | 值 |
+|---|---|
+| 窗口 | 1120 × 820 dip（工作区 92% 收缩） |
+| 标题栏 | 48 dip，图标 + 插件名，`ExtendsContentIntoTitleBar` |
+| 内容滚动层 | `ScrollViewer`，**Padding 24,16,24,8** |
+| 底部 | 保存/取消，右对齐，`Margin 24,12,24,20`，`MinWidth 120` |
+| 主题 | 跟随**系统**（`SystemUsesLightTheme`），不是 WidBar 的 ThemeMode |
+
+⇒ 插件 `CreateSettingsContent()` 返回的元素**不要**再套 `ScrollViewer`、不要自带外边距/窄 MaxWidth。
+本仓库按此契约重排设置页，详见 [`docs/07-设置页设计.md`](07-设置页设计.md)。

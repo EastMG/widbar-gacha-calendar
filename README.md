@@ -58,7 +58,7 @@ WinUI 3 Fluent 规范（主题资源、8px 网格、卡片、克制的分隔线�
 
 > 以上由 `GachaWidget.exe --ui-preview=preview|flyout|settings` 按真实尺寸渲染后截图
 > （深色主题、150% 缩放、内置示例数据）；WidBar 里会自动跟随系统深浅色。
-> 浅色主题截图见 `docs/images/design-*-light.png`（`--theme=light`）。
+> 浅色主题截图见 `docs/images/design-*-light.png`（`--theme=light`）。设置页为什么这样排：见 [`docs/07-设置页设计.md`](docs/07-设置页设计.md)（宿主 chrome 契约 + WinUI SettingsCard）。
 
 ### 设计冒烟（不装 WidBar 也能看效果）
 
@@ -68,7 +68,7 @@ WinUI 3 Fluent 规范（主题资源、8px 网格、卡片、克制的分隔线�
 # 可选：--theme=light / --theme=dark（默认 dark）
 ```
 
-- `preview`（372dip 预览条）、`flyout`（830×580 面板）、`settings`（900×940 设置页）三种；
+- `preview`（372dip 预览条）、`flyout`（830×580 面板）、`settings`（**宿主 chrome 1:1 模拟**：1120×820 窗口 + 48 标题栏 + 24/16/24/8 滚动区 + 底部保存/取消）三种；
 - 这是开发期 harness：不连宿主、不发网络请求，用内置示例数据渲染。
 
 

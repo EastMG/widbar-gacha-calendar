@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <UserControl
     x:Class="GachaWidget.Views.SettingsView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -53,12 +53,16 @@
         </Style>
     </UserControl.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <StackPanel
-            MaxWidth="760"
-            Padding="20,16,20,20"
-            HorizontalAlignment="Stretch"
-            Spacing="20">
+    <!--
+        宿主契约（WidBar.SDK.Hosting.SettingsHostWindow，1120×820dip 窗口）已经提供：
+        48dip 标题栏 + ScrollViewer（Padding 24,16,24,8）+ 底部「保存 / 取消」。
+        因此这里**不再套第二层 ScrollViewer、不再自带外边距**，内容要铺满宿主给到的宽度
+        （≈1120 - 48 = 1072dip）；卡片本身仍按 Windows 设置 / WinUI SettingsCard 的规格做。
+    -->
+    <StackPanel
+        MaxWidth="1040"
+        HorizontalAlignment="Stretch"
+        Spacing="24">
 
             <!-- ============================== 显示 ============================== -->
             <StackPanel Spacing="12">
@@ -74,7 +78,7 @@
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         CornerRadius="8">
-                        <Grid ColumnSpacing="16" MinHeight="40">
+                        <Grid ColumnSpacing="16" MinHeight="56">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -101,7 +105,7 @@
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         CornerRadius="8">
-                        <Grid ColumnSpacing="16" MinHeight="40">
+                        <Grid ColumnSpacing="16" MinHeight="56">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -128,7 +132,7 @@
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         CornerRadius="8">
-                        <Grid ColumnSpacing="16" MinHeight="40">
+                        <Grid ColumnSpacing="16" MinHeight="56">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -164,7 +168,7 @@
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         CornerRadius="8">
-                        <Grid ColumnSpacing="16" MinHeight="40">
+                        <Grid ColumnSpacing="16" MinHeight="56">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -191,7 +195,7 @@
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         CornerRadius="8">
-                        <Grid ColumnSpacing="16" MinHeight="40">
+                        <Grid ColumnSpacing="16" MinHeight="56">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -268,7 +272,7 @@
                         BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         CornerRadius="8">
-                        <Grid ColumnSpacing="16" MinHeight="40">
+                        <Grid ColumnSpacing="16" MinHeight="56">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="Auto" />
@@ -386,5 +390,4 @@
                 </Border>
             </StackPanel>
         </StackPanel>
-    </ScrollViewer>
 </UserControl>

@@ -2,6 +2,16 @@
 
 格式：每条一行，版本号与 `src/GachaWidget/GachaWidget.csproj` 的 `<Version>` 对应。
 
+## v0.1.20（2026-10-21）
+
+- fix: 设置页对齐 **宿主 chrome 契约**（`SettingsHostWindow` 1120×820 / 滚动区 Padding 24,16,24,8）：
+  去掉内层 ScrollViewer（双滚动）、去掉自带 Padding 与 MaxWidth=760 的窄栏，内容铺满宿主宽度；
+  卡片行高 40 → 56，与 Windows 设置节奏一致。
+- feat: 设计 harness 的 settings 视图 1:1 模拟宿主 chrome（48 标题栏 + 滚动区 + 底部保存/取消），
+  截图与真机一致；新增 `docs/07-设置页设计.md`（宿主契约、设计令牌、方案对比与备选）。
+- docs: 归档旧表单 `docs/design/settings-form-0.1.0.xaml`（仅参考）；docs/03 补 §7.8。
+- 验证：build 0 warning/0 error；Core 单测 434；harness 深浅色设置页截图正常。
+
 ## v0.1.19（2026-10-21）
 
 - feat: 设计 harness 支持 `--theme=light|dark`，并实拍浅色主题三张截图（`docs/images/design-*-light.png`），
